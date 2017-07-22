@@ -63,7 +63,7 @@ class ConvNet:
             input_shape=(batch_size, 8, 8, 64), n_size=3, n_filter=64, 
             stride=1, activation='relu', batch_normal=True, name='conv13')
         pool_layer14 = PoolLayer(
-            n_size=2, stride=2, mode='max', name='pool14')
+            n_size=2, stride=2, mode='avg', name='pool14')
         dense_layer15 = DenseLayer(
             input_shape=(batch_size, 4 * 4 * 64), hidden_dim=10, activation='softmax', 
             dropout=False, keep_prob=None, batch_normal=True, name='dense15')
@@ -98,13 +98,14 @@ class ConvNet:
         
     def train(self, batch_size=128, epochs=5, backup_path='backup/cifar10/'):
         saver = tf.train.Saver(write_version=tf.train.SaverDef.V2, max_to_keep=epochs)
-        sess = tf.Session()
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
+        sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         sess.run(tf.global_variables_initializer())
         for epoch in range(0, epochs+1):
             # 保存模型
             saver_path = saver.save(sess, os.path.join(backup_path, 
                                                        'model.ckpt'))
-            if epoch <= 50 or epoch % 20 == 0:
+            if epoch <= 50 or epoch % 100 == 0:
                 saver_path = saver.save(sess, os.path.join(backup_path, 
                                                            'model_%d.ckpt' % (epoch)))
             # 在训练之前，在验证集上计算准确率

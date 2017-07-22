@@ -50,9 +50,9 @@ def plot_curve(loss_list, loss_idxs, precision_list, precision_idxs):
 	plt.show()
 
 
-loss_list, precision_list = load_log('E://Temporal/Python/ImageSaliency/results/cifar10-v2/cifar10-v2.txt')
+loss_list, precision_list = load_log('E:\\Github\cifar10-tensorflow\\results\cifar10-v3\cifar10-v3.txt')
 print(len(loss_list), len(precision_list))
 print(numpy.array(loss_list[900:1000]).mean(), numpy.array(precision_list[900:1000]).mean())
-loss_list, loss_idxs = curve_smooth(loss_list, batch_size=5)
-precision_list, precision_idxs = curve_smooth(precision_list, batch_size=5)
+loss_list, loss_idxs = curve_smooth(loss_list, batch_size=1)
+precision_list, precision_idxs = curve_smooth(precision_list, batch_size=1)
 plot_curve(loss_list, loss_idxs, precision_list, precision_idxs)
