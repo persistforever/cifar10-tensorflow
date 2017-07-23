@@ -5,13 +5,14 @@ import numpy
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import src.data.cifar10 as cifar10
+from src.model.network import Network
 from src.layer.conv_layer import ConvLayer
 from src.layer.dense_layer import DenseLayer
 from src.layer.pool_layer import PoolLayer
 
 cifar10 = cifar10.read_data_sets('data/CIFAR10_data', one_hot=True)
 
-class ConvNet:
+class ConvNet(Network):
     
     def construct_model(self, batch_size=128, n_channel=3, n_classes=10):
         # input variable
@@ -68,25 +69,25 @@ class ConvNet:
         self.label_max_prob = tf.reduce_max(self.label_prob)
         self.gradient = tf.gradients(self.label_max_prob, self.image)
         
-    def train(self, batch_size=128, epochs=5, backup_path='backup/cifar10/'):
-        saver = tf.train.Saver(write_version=tf.train.SaverDef.V2, max_to_keep=epochs)
+    def train(self, backup_path, n_epoch=5, batch_size=128):
+        saver = tf.train.Saver(write_version=tf.train.SaverDef.V2, max_to_keep=n_epoch)
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
         sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         sess.run(tf.global_variables_initializer())
-        for epoch in range(0, epochs+1):
+        for epoch in range(0, n_epoch+1):
             # 保存模型
-            saver_path = saver.save(sess, os.path.join(backup_path, 
-                                                       'model.ckpt'))
-            if epoch <= 50 or epoch % 20 == 0:
-                saver_path = saver.save(sess, os.path.join(backup_path, 
-                                                           'model_%d.ckpt' % (epoch)))
+            saver_path = saver.save(
+                sess, os.path.join(backup_path, 'model.ckpt'))
+            if epoch <= 100 and epoch % 10 or epoch % 100 == 0:
+                saver_path = saver.save(
+                    sess, os.path.join(backup_path, 'model_%d.ckpt' % (epoch)))
             # 在训练之前，在验证集上计算准确率
             precision = []
             for batch in range(int(cifar10.validation.num_examples / batch_size)):
                 batch_image, batch_label = cifar10.validation.next_batch(batch_size)
                 precision_onebatch = sess.run(self.accuracy, feed_dict={
                     self.image:batch_image, self.label:batch_label,
-                    self.keep_prob: 0.5})
+                    self.keep_prob: 1.0})
                 precision.append(precision_onebatch)
             print('epoch: %d, valid precision: %.4f' % (epoch, numpy.mean(precision)))
             # 开始本轮的训练
@@ -98,7 +99,7 @@ class ConvNet:
                 if (batch+1) % int(cifar10.train.num_examples / batch_size / 10) == 0:
                     print(('loss: %.4f') % (objective))
                 
-    def test(self, batch_size=128, backup_path='backup/cifar10/', epoch=1):
+    def test(self, backup_path, epoch, batch_size=128):
         saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
         sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
@@ -109,10 +110,10 @@ class ConvNet:
         print('read model from %s' % (model_path))
         # 在测试集上计算准确率
         precision = []
-        for batch in range(int(mnist.test.num_examples / batch_size)):
-            batch_image, batch_label = mnist.test.next_batch(batch_size)
+        for batch in range(int(cifar10.test.num_examples / batch_size)):
+            batch_image, batch_label = cifar10.test.next_batch(batch_size)
             precision_onebatch = sess.run(self.accuracy, feed_dict={
-                self.image:batch_image, self.label:batch_label, self.keep_prob:0.5})
+                self.image:batch_image, self.label:batch_label, self.keep_prob:1.0})
             precision.append(precision_onebatch)
         print('test precision: %.4f' % (numpy.mean(precision)))
         
@@ -205,11 +206,3 @@ class ConvNet:
             plt.hist(distribution8, bins=50, color='#00FFFF')
             plt.title('batch normalized')
             plt.show()
-            
-    def debug(self):
-        sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
-        temp = sess.run(self.observe, feed_dict={
-            self.image: numpy.random.random(size=[2, 32, 32, 3]),
-            self.keep_prob: 0.5})
-        print(temp.shape)

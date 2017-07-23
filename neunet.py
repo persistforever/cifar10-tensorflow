@@ -10,18 +10,8 @@ def basic_cnn():
     convnet = ConvNet()
     convnet.construct_model(batch_size=128, n_channel=3, n_classes=10)
     # convnet.debug()
-    convnet.train(batch_size=128, epochs=30, backup_path='backup/cifar10-v1/')
-    # convnet.test(batch_size=1)
-    # convnet.observe_salience(batch_size=1, n_channel=3, num_test=10, epoch=2)
-    # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
-
-def basic_cnn_cifar():
-    from src.model.basic_cnn_cifar import ConvNet
-    convnet = ConvNet()
-    convnet.construct_model(batch_size=128, n_channel=3, n_classes=10)
-    # convnet.debug()
-    convnet.train(batch_size=128, epochs=30)
-    # convnet.test(batch_size=1)
+    convnet.train(backup_path='backup/cifar10-v1/', batch_size=128, n_epoch=1000)
+    # convnet.test(backup_path='backup/cifar10-v1/', epoch=0, batch_size=128)
     # convnet.observe_salience(batch_size=1, n_channel=3, num_test=10, epoch=2)
     # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
     
@@ -30,8 +20,8 @@ def batchnormal_cnn():
     convnet = ConvNet()
     convnet.construct_model(batch_size=128, n_channel=3, n_classes=10)
     # convnet.debug()
-    convnet.train(batch_size=128, epochs=1000, backup_path='backup/cifar10-v2/')
-    # convnet.test(batch_size=1)
+    convnet.train(backup_path='backup/cifar10-v2/', batch_size=128, n_epoch=1000)
+    # convnet.test(backup_path='backup/cifar10-v2/', epoch=0, batch_size=128)
     # convnet.observe_salience(batch_size=1, n_channel=3, num_test=10, epoch=2)
     # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
     
@@ -40,9 +30,19 @@ def plain_cnn():
     convnet = ConvNet()
     convnet.construct_model(batch_size=128, n_channel=3, n_classes=10)
     # convnet.debug()
-    convnet.train(batch_size=128, epochs=1000, backup_path='backup/cifar10-v3')
-    # convnet.test(batch_size=1)
+    convnet.train(backup_path='backup/cifar10-v3/', batch_size=128, n_epoch=1000)
+    # convnet.test(backup_path='backup/cifar10-v3/', epoch=0, batch_size=128)
+    # convnet.observe_salience(batch_size=1, n_channel=3, num_test=10, epoch=2)
+    # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
+    
+def residual_net():
+    from src.model.residual_net import ConvNet
+    convnet = ConvNet()
+    convnet.construct_model(batch_size=128, n_channel=3, n_classes=10)
+    # convnet.debug()
+    convnet.train(backup_path='backup/cifar10-v4/', batch_size=128, n_epoch=1000)
+    # convnet.test(backup_path='backup/cifar10-v4/', epoch=0, batch_size=128)
     # convnet.observe_salience(batch_size=1, n_channel=3, num_test=10, epoch=2)
     # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
 
-plain_cnn()
+residual_net()

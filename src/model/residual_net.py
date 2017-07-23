@@ -70,23 +70,45 @@ class ConvNet(Network):
             dropout=False, keep_prob=None, batch_normal=True, name='dense15')
         
         # data flow
-        hidden_conv1 = conv_layer1.get_output(input=self.image)
-        hidden_conv2 = conv_layer2.get_output(input=hidden_conv1)
-        hidden_conv3 = conv_layer3.get_output(input=hidden_conv2)
-        hidden_conv4 = conv_layer4.get_output(input=hidden_conv3)
-        hidden_conv5 = conv_layer5.get_output(input=hidden_conv4)
-        hidden_conv6 = conv_layer6.get_output(input=hidden_conv5)
-        hidden_conv7 = conv_layer7.get_output(input=hidden_conv6)
-        hidden_conv8 = conv_layer8.get_output(input=hidden_conv7)
-        hidden_conv9 = conv_layer9.get_output(input=hidden_conv8)
-        hidden_conv10 = conv_layer10.get_output(input=hidden_conv9)
-        hidden_conv11 = conv_layer11.get_output(input=hidden_conv10)
-        hidden_conv12 = conv_layer12.get_output(input=hidden_conv11)
-        hidden_conv13 = conv_layer13.get_output(input=hidden_conv12)
-        hidden_pool14 = pool_layer14.get_output(hidden_conv13)
+        output_conv1 = conv_layer1.get_output(input=self.image)
+        output_conv2 = conv_layer2.get_output(input=output_conv1)
+        output_conv3 = conv_layer3.get_output(input=output_conv2)
+        # conv2 and conv3 residual
+        hidden_conv3 = conv_layer3.hidden
+        output_conv3 = tf.nn.relu(hidden_conv3 + output_conv1)
+        output_conv4 = conv_layer4.get_output(input=output_conv3)
+        output_conv5 = conv_layer5.get_output(input=output_conv4)
+        # conv4 and conv5 residual
+        hidden_conv5 = conv_layer5.hidden
+        output_conv5 = tf.nn.relu(hidden_conv5 + output_conv3)
+        output_conv6 = conv_layer6.get_output(input=output_conv5)
+        output_conv7 = conv_layer7.get_output(input=output_conv6)
+        # conv6 and conv7 residual
+        hidden_conv7 = conv_layer7.hidden
+        output_conv5 = PoolLayer(n_size=2, stride=2, mode='avg').get_output(output_conv5)
+        output_conv5 = tf.pad(output_conv5, [[0,0], [0,0], [0,0], [8,8]])
+        output_conv7 = tf.nn.relu(hidden_conv7 + output_conv5)
+        output_conv8 = conv_layer8.get_output(input=output_conv7)
+        output_conv9 = conv_layer9.get_output(input=output_conv8)
+        # conv8 and conv9 residual
+        hidden_conv9 = conv_layer9.hidden
+        output_conv9 = tf.nn.relu(hidden_conv9 + output_conv7)
+        output_conv10 = conv_layer10.get_output(input=output_conv9)
+        output_conv11 = conv_layer11.get_output(input=output_conv10)
+        # conv10 and conv11 residual
+        hidden_conv11 = conv_layer11.hidden
+        output_conv9 = PoolLayer(n_size=2, stride=2, mode='avg').get_output(output_conv9)
+        output_conv9 = tf.pad(output_conv9, [[0,0], [0,0], [0,0], [16,16]])
+        output_conv11 = tf.nn.relu(hidden_conv11 + output_conv9)
+        output_conv12 = conv_layer12.get_output(input=output_conv11)
+        output_conv13 = conv_layer13.get_output(input=output_conv12)
+        # conv12 and conv13 residual
+        h_conv13 = conv_layer13.hidden
+        output_conv13 = tf.nn.relu(h_conv13 + output_conv11)
+        hidden_pool14 = pool_layer14.get_output(output_conv13)
         input_dense15 = tf.reshape(hidden_pool14, [batch_size, 4 * 4 * 64])
         self.label_prob = dense_layer15.get_output(input=input_dense15)
-        # self.observe = self.label_prob
+        self.observe = self.label_prob
         # objective function and optimizer
         self.objective = - tf.reduce_sum(self.label * tf.log(self.label_prob + 1e-6))
         self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(self.objective)

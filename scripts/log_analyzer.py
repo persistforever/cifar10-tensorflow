@@ -52,7 +52,7 @@ def plot_curve(loss_list, loss_idxs, precision_list, precision_idxs):
 
 loss_list, precision_list = load_log('E:\\Github\cifar10-tensorflow\\results\cifar10-v3\cifar10-v3.txt')
 print(len(loss_list), len(precision_list))
-print(numpy.array(loss_list[900:1000]).mean(), numpy.array(precision_list[900:1000]).mean())
-loss_list, loss_idxs = curve_smooth(loss_list, batch_size=1)
-precision_list, precision_idxs = curve_smooth(precision_list, batch_size=1)
+print(numpy.array(loss_list[-100:]).mean(), numpy.array(precision_list[2500:3500]).mean())
+loss_list, loss_idxs = curve_smooth(loss_list, batch_size=30)
+precision_list, precision_idxs = curve_smooth(precision_list, batch_size=30)
 plot_curve(loss_list, loss_idxs, precision_list, precision_idxs)
