@@ -13,21 +13,24 @@ class DenseLayer:
         self.hidden_dim = hidden_dim
         self.activation = activation
         self.dropout = dropout
-        self.batch_normal = batch_normal
+        self.biasatch_normal = batch_normal
         # weight
-        self.W = tf.Variable(
+        self.weight = tf.Variable(
             initial_value=tf.random_normal(
                 shape=[self.input_shape[1], self.hidden_dim],
-                mean=0.0, stddev=0.01),
+                mean=0.0,
+                stddev=0.01), 
+                # stddev=numpy.sqrt(
+                #     6.0 / (self.input_shape[1]))),
             name='W_%s' % (name))
         # bias
-        self.b = tf.Variable(
-            initial_value=tf.zeros(
-                shape=[self.hidden_dim]),
+        self.bias = tf.Variable(
+            initial_value=tf.constant(
+                0.0, shape=[self.hidden_dim]),
             name='b_%s' % (name))
         # gamma
-        self.epsilon = 1e-5
-        if self.batch_normal:
+        if self.biasatch_normal:
+            self.epsilon = 1e-5
             self.gamma = tf.Variable(
                 initial_value=tf.random_normal(
                     shape=[self.hidden_dim]),
@@ -40,14 +43,14 @@ class DenseLayer:
         # calculate input_shape and output_shape
         self.output_shape = [self.input_shape[0], self.hidden_dim]
         # hidden states
-        intermediate = tf.matmul(input, self.W)
+        intermediate = tf.matmul(input, self.weight)
         # batch normalization
-        if self.batch_normal:
+        if self.biasatch_normal:
             mean, variance = tf.nn.moments(intermediate, axes=[0])
             self.hidden = tf.nn.batch_normalization(
-                intermediate, mean, variance, self.b, self.gamma, self.epsilon)
+                intermediate, mean, variance, self.bias, self.gamma, self.epsilon)
         else:
-            self.hidden = intermediate + self.b
+            self.hidden = intermediate + self.bias
         # dropout
         if self.dropout:
             self.hidden = tf.nn.dropout(self.hidden, keep_prob=self.keep_prob)
@@ -58,5 +61,7 @@ class DenseLayer:
             self.output = tf.nn.tanh(self.hidden)
         elif self.activation == 'softmax':
             self.output = tf.nn.softmax(self.hidden)
+        elif self.activation == 'none':
+            self.output = self.hidden
         
         return self.output

@@ -13,21 +13,21 @@ class ConvLayer:
         self.n_filter = n_filter
         self.activation = activation
         self.stride = stride
-        self.batch_normal = batch_normal
+        self.biasatch_normal = batch_normal
         # filter
-        self.W = tf.Variable(
+        self.weight = tf.Variable(
             initial_value=tf.random_normal(
                 shape=[n_size, n_size, self.input_shape[3], self.n_filter],
                 mean=0.0, stddev=0.01),
             name='W_%s' % (name))
         # bias
-        self.b = tf.Variable(
-            initial_value=tf.zeros(
-                shape=[self.n_filter]),
+        self.bias = tf.Variable(
+            initial_value=tf.constant(
+                0.0, shape=[self.n_filter]),
             name='b_%s' % (name))
         # gamma
-        self.epsilon = 1e-5
-        if self.batch_normal:
+        if self.biasatch_normal:
+            self.epsilon = 1e-5
             self.gamma = tf.Variable(
                 initial_value=tf.random_normal(
                     shape=[self.n_filter]),
@@ -39,15 +39,15 @@ class ConvLayer:
                              int(self.input_shape[2]/self.stride), self.n_filter]
         # hidden states
         self.conv = tf.nn.conv2d(
-            input=input, filter=self.W, 
+            input=input, filter=self.weight, 
             strides=[1, self.stride, self.stride, 1], padding='SAME')
         # batch normal
-        if self.batch_normal:
+        if self.biasatch_normal:
             mean, variance = tf.nn.moments(self.conv, axes=[0, 1, 2], keep_dims=False)
             self.hidden = tf.nn.batch_normalization(
-                self.conv, mean, variance, self.b, self.gamma, self.epsilon)
+                self.conv, mean, variance, self.bias, self.gamma, self.epsilon)
         else:
-            self.hidden = self.conv + self.b
+            self.hidden = self.conv + self.bias
         # activation
         if self.activation == 'relu':
             self.output = tf.nn.relu(self.hidden)

@@ -10,64 +10,151 @@ from src.layer.conv_layer import ConvLayer
 from src.layer.dense_layer import DenseLayer
 from src.layer.pool_layer import PoolLayer
 
-cifar10 = cifar10.read_data_sets('data/CIFAR10_data', one_hot=True)
-
-class ConvNet(Network):
+class ConvNet():
     
-    def construct_model(self, batch_size=128, n_channel=3, n_classes=10):
-        # input variable
-        self.image = tf.placeholder(
-            dtype=tf.float32, shape=[batch_size, 32, 32, n_channel], name='image')
-        self.label = tf.placeholder(
-            dtype=tf.float32, shape=[batch_size, n_classes], name='label')
+    def __init__(self, n_channel=3, n_classes=10):  
+        # 输入变量
+        self.images = tf.placeholder(
+            dtype=tf.float32, shape=[None, 32, 32, n_channel], name='image')
+        self.labels = tf.placeholder(
+            dtype=tf.int64, shape=[None], name='label')
         self.keep_prob = tf.placeholder(
             dtype=tf.float32, name='keep_prob')
         
-        # network structure
+        # 网络结构
         conv_layer1 = ConvLayer(
-            input_shape=(batch_size, 32, 32, n_channel), n_size=3, n_filter=64, 
+            input_shape=(None, 32, 32, n_channel), n_size=3, n_filter=64, 
             stride=1, activation='relu', batch_normal=False, name='conv1')
         pool_layer1 = PoolLayer(
-            n_size=2, stride=2, mode='max', name='pool1')
+            n_size=2, stride=2, mode='max', resp_normal=False, name='pool1')
         conv_layer2 = ConvLayer(
-            input_shape=(batch_size, 16, 16, 64), n_size=3, n_filter=128, 
+            input_shape=(None, 16, 16, 64), n_size=3, n_filter=128, 
             stride=1, activation='relu', batch_normal=False, name='conv2')
         pool_layer2 = PoolLayer(
-            n_size=2, stride=2, mode='max', name='pool2')
+            n_size=2, stride=2, mode='max', resp_normal=False, name='pool2')
         conv_layer3 = ConvLayer(
-            input_shape=(batch_size, 8, 8, 128), n_size=3, n_filter=256, 
+            input_shape=(None, 8, 8, 128), n_size=3, n_filter=256, 
             stride=1, activation='relu', batch_normal=False, name='conv3')
         pool_layer3 = PoolLayer(
-            n_size=2, stride=2, mode='max', name='pool3')
+            n_size=2, stride=2, mode='max', resp_normal=False, name='pool3')
         dense_layer1 = DenseLayer(
-            input_shape=(batch_size, 4 * 4 * 256), hidden_dim=1024, 
-            activation='relu', dropout=True, keep_prob=self.keep_prob, 
+            input_shape=(None, 4 * 4 * 256), hidden_dim=1024, 
+            activation='relu', dropout=False, keep_prob=None, 
             batch_normal=False, name='dense1')
         dense_layer2 = DenseLayer(
-            input_shape=(batch_size, 1024), hidden_dim=n_classes, 
-            activation='softmax', dropout=False, keep_prob=None, 
+            input_shape=(None, 1024), hidden_dim=n_classes, 
+            activation='none', dropout=False, keep_prob=None, 
             batch_normal=False, name='dense2')
-        
-        # data flow
-        hidden_conv1 = conv_layer1.get_output(input=self.image)
+        # 数据流
+        hidden_conv1 = conv_layer1.get_output(input=self.images)
         hidden_pool1 = pool_layer1.get_output(input=hidden_conv1)
         hidden_conv2 = conv_layer2.get_output(input=hidden_pool1)
         hidden_pool2 = pool_layer2.get_output(input=hidden_conv2)
         hidden_conv3 = conv_layer3.get_output(input=hidden_pool2)
         hidden_pool3 = pool_layer3.get_output(input=hidden_conv3)
-        input_dense1 = tf.reshape(hidden_pool3, [batch_size, 4 * 4 * 256])
-        hidden_dense1 = dense_layer1.get_output(input=input_dense1)
-        self.label_prob = dense_layer2.get_output(input=hidden_dense1)
-        self.observe = self.label_prob
-        # objective function and optimizer
-        self.objective = - tf.reduce_sum(self.label * tf.log(self.label_prob + 1e-6))
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(self.objective)
-        # observation
-        correct_prediction = tf.equal(tf.argmax(self.label_prob, 1), tf.argmax(self.label, 1))
+        input_dense1 = tf.reshape(hidden_pool3, [-1, 4 * 4 * 256])
+        output_dense1 = dense_layer1.get_output(input=input_dense1)
+        logits = dense_layer2.get_output(input=output_dense1)
+        
+        # 目标函数和优化器
+        self.objective = tf.reduce_sum(
+            tf.nn.sparse_softmax_cross_entropy_with_logits(
+                logits=logits, labels=self.labels))
+        tf.add_to_collection('losses', self.objective)
+        self.avg_loss = tf.add_n(tf.get_collection('losses'))
+        self.optimizer = tf.train.AdamOptimizer().minimize(self.avg_loss)
+        # 观察值
+        correct_prediction = tf.equal(self.labels, tf.argmax(logits, 1))
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
-        self.label_pred = tf.argmax(self.label_prob, 1)
-        self.label_max_prob = tf.reduce_max(self.label_prob)
-        self.gradient = tf.gradients(self.label_max_prob, self.image)
+        
+    def train(self, dataloader, backup_path, n_epoch=5, batch_size=128):
+        # 构建会话
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.33)
+        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        # 模型保存器
+        self.saver = tf.train.Saver(
+            var_list=tf.global_variables(), write_version=tf.train.SaverDef.V2, 
+            max_to_keep=1000)
+        # 模型初始化
+        self.sess.run(tf.global_variables_initializer())
+        # 模型训练
+        for epoch in range(0, n_epoch+1):
+            # 开始本轮的训练
+            for i in range(0, dataloader.n_train, batch_size):
+                batch_images = dataloader.train_images[i: i+batch_size]
+                batch_labels = dataloader.train_labels[i: i+batch_size]
+                [_, avg_loss] = self.sess.run(
+                    fetches=[self.optimizer, self.avg_loss], 
+                    feed_dict={self.images: batch_images, 
+                               self.labels: batch_labels, 
+                               self.keep_prob: 0.5})
+            # 在训练之后，获得本轮的训练集损失值和准确率
+            accuracy_list, loss_list = [], []
+            for i in range(0, dataloader.n_train, batch_size):
+                batch_images = dataloader.train_images[i: i+batch_size]
+                batch_labels = dataloader.train_labels[i: i+batch_size]
+                [avg_accuracy, avg_loss] = self.sess.run(
+                    fetches=[self.accuracy, self.avg_loss], 
+                    feed_dict={self.images: batch_images, 
+                               self.labels: batch_labels, 
+                               self.keep_prob: 1.0})
+                accuracy_list.append(avg_accuracy)
+                loss_list.append(avg_loss)
+            train_accuracy, train_loss = numpy.mean(accuracy_list), numpy.mean(loss_list)
+            # 在训练之后，获得本轮的验证集损失值和准确率
+            accuracy_list, loss_list = [], []
+            for i in range(0, dataloader.n_valid, batch_size):
+                batch_images = dataloader.valid_images[i: i+batch_size]
+                batch_labels = dataloader.valid_labels[i: i+batch_size]
+                [avg_accuracy, avg_loss] = self.sess.run(
+                    fetches=[self.accuracy, self.avg_loss], 
+                    feed_dict={self.images: batch_images, 
+                               self.labels: batch_labels, 
+                               self.keep_prob: 1.0})
+                accuracy_list.append(avg_accuracy)
+                loss_list.append(avg_loss)
+            valid_accuracy, valid_loss = numpy.mean(accuracy_list), numpy.mean(loss_list)
+            print('epoch: %d, train precision: %.6f, train loss: %.6f, valid precision: %.6f, valid loss: %.6f' % (
+                epoch, train_accuracy, train_loss, valid_accuracy, valid_loss))
+            # 保存模型
+            saver_path = self.saver.save(
+                self.sess, os.path.join(backup_path, 'model.ckpt'))
+            if epoch <= 100 and epoch % 10 == 0 or epoch <= 1000 and epoch % 100 == 0 or \
+                epoch <= 10000 and epoch % 1000 == 0:
+                saver_path = self.saver.save(
+                    self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (epoch)))
+                
+    def test(self, dataloader, backup_path, epoch, batch_size=128):
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
+        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        # 读取模型
+        self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
+        model_path = os.path.join(backup_path, 'model_%d.ckpt' % (epoch))
+        assert(os.path.exists(model_path+'.index'))
+        self.saver.restore(sess, model_path)
+        print('read model from %s' % (model_path))
+        # 在测试集上计算准确率
+        accuracy_list = []
+        for i in range(0, dataloader.n_test, batch_size):
+            batch_images = dataloader.valid_images[i: i+batch_size]
+            batch_labels = dataloader.valid_labels[i: i+batch_size]
+            [avg_accuracy] = sess.run(
+                fetches=[self.accuracy], 
+                feed_dict={self.images:batch_images, 
+                           self.labels:batch_labels,
+                           self.keep_prob:1.0})
+            accuracy_list.append(avg_accuracy)
+        print('test precision: %.4f' % (numpy.mean(accuracy_list)))
+            
+    def debug(self):
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+        [temp] = sess.run(
+            fetches=[self.observe],
+            feed_dict={self.images: numpy.random.random(size=[128, 32, 32, 3]),
+                       self.labels: numpy.random.randint(low=0, high=9, size=[128,]),
+                       self.keep_prob: 1.0})
+        print(temp)
         
     def observe_salience(self, batch_size=128, image_h=32, image_w=32, n_channel=3, 
                          num_test=10, epoch=1):
@@ -85,13 +172,13 @@ class ConvNet(Network):
             batch_image, batch_label = cifar10.test.next_batch(batch_size)
             image = numpy.array(batch_image.reshape([image_h, image_w, n_channel]) * 255,
                                 dtype='uint8')
-            result = sess.run([self.label_prob, self.label_max_prob, self.label_pred,
+            result = sess.run([self.labels_prob, self.labels_max_prob, self.labels_pred,
                                self.gradient],
-                              feed_dict={self.image:batch_image, self.label:batch_label,
+                              feed_dict={self.images:batch_image, self.labels:batch_label,
                                          self.keep_prob:0.5})
             print(result[0:3], result[3][0].shape)
             gradient = sess.run(self.gradient, feed_dict={
-                self.image:batch_image, self.keep_prob:0.5})
+                self.images:batch_image, self.keep_prob:0.5})
             gradient = gradient[0].reshape([image_h, image_w, n_channel])
             gradient = numpy.max(gradient, axis=2)
             gradient = numpy.array((gradient - gradient.min()) * 255
@@ -123,7 +210,7 @@ class ConvNet(Network):
             result = sess.run([self.nobn_conv1, self.bn_conv1, self.nobn_conv2, self.bn_conv2,
                                self.nobn_conv3, self.bn_conv3, self.nobn_fc1, self.nobn_fc1,
                                self.nobn_softmax, self.bn_softmax],
-                              feed_dict={self.image:batch_image, self.label:batch_label,
+                              feed_dict={self.images:batch_image, self.labels:batch_label,
                                          self.keep_prob:0.5})
             distribution1 = result[0][:,0].flatten()
             distribution2 = result[1][:,0].flatten()

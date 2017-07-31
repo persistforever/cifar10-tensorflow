@@ -11,10 +11,8 @@ def load_log(path):
 		loss, loss_list, precision_list = [], [], []
 		for line in fo:
 			line = line.strip()
-			pattern1 = re.compile(r'loss: ([\d\.]+)')
-			pattern2 = re.compile(r'epoch: ([\d]+), valid precision: ([\d\.]+)')
-			loss_res = pattern1.findall(line)
-			precision_res = pattern2.findall(line)
+			pattern = re.compile(r'epoch: ([\d]+), train precision: ([\d\.]+), train loss: ([\d\.]+), valid precision: ([\d\.+])')
+			res = pattern.findall(line)
 			if loss_res:
 				loss.append(float(loss_res[0]))
 			if precision_res:
@@ -50,9 +48,9 @@ def plot_curve(loss_list, loss_idxs, precision_list, precision_idxs):
 	plt.show()
 
 
-loss_list, precision_list = load_log('E:\\Github\cifar10-tensorflow\\results\cifar10-v3\cifar10-v3.txt')
+loss_list, precision_list = load_log('E:\\Github\cifar10-tensorflow\\results\cifar10-v1\cifar10-v1.txt')
 print(len(loss_list), len(precision_list))
-print(numpy.array(loss_list[-100:]).mean(), numpy.array(precision_list[2500:3500]).mean())
-loss_list, loss_idxs = curve_smooth(loss_list, batch_size=30)
-precision_list, precision_idxs = curve_smooth(precision_list, batch_size=30)
+print(numpy.array(loss_list[-100:]).mean(), numpy.array(precision_list[-100:]).mean())
+loss_list, loss_idxs = curve_smooth(loss_list[0:500], batch_size=1)
+precision_list, precision_idxs = curve_smooth(precision_list, batch_size=10)
 plot_curve(loss_list, loss_idxs, precision_list, precision_idxs)
