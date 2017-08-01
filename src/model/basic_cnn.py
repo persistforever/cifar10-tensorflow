@@ -24,27 +24,30 @@ class ConvNet():
         # 网络结构
         conv_layer1 = ConvLayer(
             input_shape=(None, 32, 32, n_channel), n_size=3, n_filter=64, 
-            stride=1, activation='relu', batch_normal=False, name='conv1')
+            stride=1, activation='relu', batch_normal=False, weight_decay=1e-5,
+            name='conv1')
         pool_layer1 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool1')
         conv_layer2 = ConvLayer(
             input_shape=(None, 16, 16, 64), n_size=3, n_filter=128, 
-            stride=1, activation='relu', batch_normal=False, name='conv2')
+            stride=1, activation='relu', batch_normal=False, weight_decay=1e-5,
+            name='conv2')
         pool_layer2 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool2')
         conv_layer3 = ConvLayer(
             input_shape=(None, 8, 8, 128), n_size=3, n_filter=256, 
-            stride=1, activation='relu', batch_normal=False, name='conv3')
+            stride=1, activation='relu', batch_normal=False, weight_decay=1e-5, 
+            name='conv3')
         pool_layer3 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool3')
         dense_layer1 = DenseLayer(
             input_shape=(None, 4 * 4 * 256), hidden_dim=1024, 
-            activation='relu', dropout=False, keep_prob=None, 
-            batch_normal=False, name='dense1')
+            activation='relu', dropout=True, keep_prob=self.keep_prob, 
+            batch_normal=False, weight_decay=1e-5, name='dense1')
         dense_layer2 = DenseLayer(
             input_shape=(None, 1024), hidden_dim=n_classes, 
             activation='none', dropout=False, keep_prob=None, 
-            batch_normal=False, name='dense2')
+            batch_normal=False, weight_decay=1e-5, name='dense2')
         # 数据流
         hidden_conv1 = conv_layer1.get_output(input=self.images)
         hidden_pool1 = pool_layer1.get_output(input=hidden_conv1)

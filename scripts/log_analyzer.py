@@ -8,19 +8,16 @@ import numpy
 
 def load_log(path):
 	with open(path, 'r') as fo:
-		loss, loss_list, precision_list = [], [], []
+		loss_list, train_precision_list, valid_precision_list = [], [], []
 		for line in fo:
 			line = line.strip()
-			pattern = re.compile(r'epoch: ([\d]+), train precision: ([\d\.]+), train loss: ([\d\.]+), valid precision: ([\d\.+])')
+			pattern = re.compile(r'epoch: ([\d]+), train precision: ([\d\.]+), train loss: ([\d\.]+), valid precision: ([\d\.]+)')
 			res = pattern.findall(line)
-			if loss_res:
-				loss.append(float(loss_res[0]))
-			if precision_res:
-				precision_list.append(float(precision_res[0][1]))
-				if loss:
-					loss_list.append(numpy.array(loss).mean())
-				loss = []
-	return loss_list, precision_list
+			if res:
+				loss_list.append(float(res[0][2]))
+				train_precision_list.append(float(res[0][1]))
+				valid_precision_list.append(float(res[0][3]))
+	return loss_list, train_precision_list, valid_precision_list
 
 def curve_smooth(data_list, batch_size=100):
 	new_data_list, idx_list = [], []
@@ -31,7 +28,7 @@ def curve_smooth(data_list, batch_size=100):
 
 	return new_data_list, idx_list
 
-def plot_curve(loss_list, loss_idxs, precision_list, precision_idxs):
+def plot_curve(loss_list, loss_idxs, train_precision_list, train_precision_idxs, valid_precision_list, valid_precision_idxs):
 	fig = plt.figure()
 	plt.subplot(121)
 	p1 = plt.plot(loss_idxs, loss_list, '.--', color='#6495ED')
@@ -40,17 +37,20 @@ def plot_curve(loss_list, loss_idxs, precision_list, precision_idxs):
 	plt.xlabel('# of epoch')
 	plt.ylabel('loss')
 	plt.subplot(122)
-	p2 = plt.plot(precision_idxs, precision_list, '.--', color='#66CDAA')
+	p2 = plt.plot(train_precision_idxs, train_precision_list, '.--', color='#66CDAA')
+	p3 = plt.plot(valid_precision_idxs, valid_precision_list, '.--', color='#FF6347')
+	plt.legend((p2[0], p3[0]), ('train_precision', 'valid_precision'))
 	plt.grid(True)
-	plt.title('cifar10 image classification valid precision')
+	plt.title('cifar10 image classification precision')
 	plt.xlabel('# of epoch')
 	plt.ylabel('accuracy')
 	plt.show()
+	# plt.savefig('E:\\Github\cifar10-tensorflow\\results\cifar10-v1\cifar10-v1.png', dpi=120, format='png')
 
 
-loss_list, precision_list = load_log('E:\\Github\cifar10-tensorflow\\results\cifar10-v1\cifar10-v1.txt')
-print(len(loss_list), len(precision_list))
-print(numpy.array(loss_list[-100:]).mean(), numpy.array(precision_list[-100:]).mean())
+loss_list, train_precision_list, valid_precision_list = load_log('E:\\Github\cifar10-tensorflow\\results\cifar10-v1\cifar10-v1.txt')
+print(numpy.array(loss_list[-100:]).mean(), numpy.array(train_precision_list[-100:]).mean())
 loss_list, loss_idxs = curve_smooth(loss_list[0:500], batch_size=1)
-precision_list, precision_idxs = curve_smooth(precision_list, batch_size=10)
-plot_curve(loss_list, loss_idxs, precision_list, precision_idxs)
+train_precision_list, train_precision_idxs = curve_smooth(train_precision_list, batch_size=10)
+valid_precision_list, valid_precision_idxs = curve_smooth(valid_precision_list, batch_size=10)
+plot_curve(loss_list, loss_idxs, train_precision_list, train_precision_idxs, valid_precision_list, valid_precision_idxs)

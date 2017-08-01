@@ -7,25 +7,29 @@ import tensorflow as tf
 class ConvLayer:
     
     def __init__(self, input_shape, n_size, n_filter, stride=1, activation='relu',
-                 batch_normal=False, name='conv'):
+                 batch_normal=False, weight_decay=None, name='conv'):
         # params
         self.input_shape = input_shape
         self.n_filter = n_filter
         self.activation = activation
         self.stride = stride
         self.biasatch_normal = batch_normal
-        # filter
+        self.weight_decay = weight_decay
+        # 权重矩阵
         self.weight = tf.Variable(
             initial_value=tf.random_normal(
                 shape=[n_size, n_size, self.input_shape[3], self.n_filter],
                 mean=0.0, stddev=0.01),
             name='W_%s' % (name))
-        # bias
+        if self.weight_decay:
+            weight_decay = tf.multiply(tf.nn.l2_loss(self.weight), self.weight_decay)
+            tf.add_to_collection('losses', weight_decay)
+        # 偏置向量
         self.bias = tf.Variable(
             initial_value=tf.constant(
                 0.0, shape=[self.n_filter]),
             name='b_%s' % (name))
-        # gamma
+        # batch normalization 技术的参数
         if self.biasatch_normal:
             self.epsilon = 1e-5
             self.gamma = tf.Variable(
@@ -41,7 +45,7 @@ class ConvLayer:
         self.conv = tf.nn.conv2d(
             input=input, filter=self.weight, 
             strides=[1, self.stride, self.stride, 1], padding='SAME')
-        # batch normal
+        # batch normalization 技术
         if self.biasatch_normal:
             mean, variance = tf.nn.moments(self.conv, axes=[0, 1, 2], keep_dims=False)
             self.hidden = tf.nn.batch_normalization(
