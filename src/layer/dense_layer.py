@@ -19,10 +19,7 @@ class DenseLayer:
         self.weight = tf.Variable(
             initial_value=tf.random_normal(
                 shape=[self.input_shape[1], self.hidden_dim],
-                mean=0.0,
-                stddev=0.01), 
-                # stddev=numpy.sqrt(
-                #     6.0 / (self.input_shape[1]))),
+                mean=0.0, stddev=numpy.sqrt(2.0 / self.input_shape[1])),
             name='W_%s' % (name))
         # weight decay技术
         if weight_decay:

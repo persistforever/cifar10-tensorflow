@@ -13,13 +13,14 @@ class ConvLayer:
         self.n_filter = n_filter
         self.activation = activation
         self.stride = stride
-        self.biasatch_normal = batch_normal
+        self.batch_normal = batch_normal
         self.weight_decay = weight_decay
         # 权重矩阵
         self.weight = tf.Variable(
-            initial_value=tf.random_normal(
+            initial_value=tf.truncated_normal(
                 shape=[n_size, n_size, self.input_shape[3], self.n_filter],
-                mean=0.0, stddev=0.01),
+                mean=0.0, stddev=numpy.sqrt(
+                    2.0 / (self.input_shape[1] * self.input_shape[2] * self.input_shape[3]))),
             name='W_%s' % (name))
         if self.weight_decay:
             weight_decay = tf.multiply(tf.nn.l2_loss(self.weight), self.weight_decay)
@@ -30,7 +31,7 @@ class ConvLayer:
                 0.0, shape=[self.n_filter]),
             name='b_%s' % (name))
         # batch normalization 技术的参数
-        if self.biasatch_normal:
+        if self.batch_normal:
             self.epsilon = 1e-5
             self.gamma = tf.Variable(
                 initial_value=tf.random_normal(
@@ -46,7 +47,7 @@ class ConvLayer:
             input=input, filter=self.weight, 
             strides=[1, self.stride, self.stride, 1], padding='SAME')
         # batch normalization 技术
-        if self.biasatch_normal:
+        if self.batch_normal:
             mean, variance = tf.nn.moments(self.conv, axes=[0, 1, 2], keep_dims=False)
             self.hidden = tf.nn.batch_normalization(
                 self.conv, mean, variance, self.bias, self.gamma, self.epsilon)

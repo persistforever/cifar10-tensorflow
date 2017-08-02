@@ -10,7 +10,7 @@ cifar10 = Corpus()
 
 def basic_cnn():
     from src.model.basic_cnn import ConvNet
-    convnet = ConvNet(n_channel=3, n_classes=10)
+    convnet = ConvNet(n_channel=3, n_classes=10, image_size=24)
     # convnet.debug()
     convnet.train(dataloader=cifar10, backup_path='backup/cifar10-v1/', batch_size=128, n_epoch=5000)
     # convnet.test(backup_path='backup/cifar10-v1/', epoch=50, batch_size=128)
