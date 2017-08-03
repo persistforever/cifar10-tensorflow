@@ -75,5 +75,4 @@ target/
 # Data files #
 ######################
 /data/
-/results/
 /backup/
