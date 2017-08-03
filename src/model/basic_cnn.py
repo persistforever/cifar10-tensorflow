@@ -1,8 +1,8 @@
 # -*- encoding: utf8 -*-
 # author: ronniecao
 import os
-import matplotlib.pyplot as plt
 import numpy
+import matplotlib.pyplot as plt
 import tensorflow as tf
 import src.data.cifar10 as cifar10
 from src.model.network import Network
