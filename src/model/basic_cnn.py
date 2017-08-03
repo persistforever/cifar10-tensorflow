@@ -1,5 +1,6 @@
 # -*- encoding: utf8 -*-
 # author: ronniecao
+import sys
 import os
 import numpy
 import matplotlib.pyplot as plt
@@ -24,19 +25,19 @@ class ConvNet():
         # 网络结构
         conv_layer1 = ConvLayer(
             input_shape=(None, image_size, image_size, n_channel), n_size=3, n_filter=64, 
-            stride=1, activation='relu', batch_normal=False, weight_decay=1e-4,
+            stride=1, activation='relu', batch_normal=False, weight_decay=None,
             name='conv1')
         pool_layer1 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool1')
         conv_layer2 = ConvLayer(
             input_shape=(None, int(image_size/2), int(image_size/2), 64), n_size=3, n_filter=128,
-            stride=1, activation='relu', batch_normal=False, weight_decay=1e-4,
+            stride=1, activation='relu', batch_normal=False, weight_decay=None,
             name='conv2')
         pool_layer2 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool2')
         conv_layer3 = ConvLayer(
             input_shape=(None, int(image_size/4), int(image_size/4), 128), n_size=3, n_filter=256, 
-            stride=1, activation='relu', batch_normal=False, weight_decay=1e-4, 
+            stride=1, activation='relu', batch_normal=False, weight_decay=None, 
             name='conv3')
         pool_layer3 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool3')
@@ -45,7 +46,7 @@ class ConvNet():
             activation='relu', dropout=True, keep_prob=self.keep_prob, 
             batch_normal=False, weight_decay=1e-4, name='dense1')
         dense_layer2 = DenseLayer(
-            input_shape=(None, 1024), hidden_dim=n_classes, 
+            input_shape=(None, 1024), hidden_dim=n_classes,
             activation='none', dropout=False, keep_prob=None, 
             batch_normal=False, weight_decay=1e-4, name='dense2')
         # 数据流
@@ -128,6 +129,7 @@ class ConvNet():
             valid_loss = 1.0 * valid_loss / dataloader.n_valid
             print('epoch: %d, train precision: %.6f, train loss: %.6f, valid precision: %.6f, valid loss: %.6f' % (
                 epoch, train_accuracy, train_loss, valid_accuracy, valid_loss))
+            sys.stdout.flush()
             # 保存模型
             saver_path = self.saver.save(
                 self.sess, os.path.join(backup_path, 'model.ckpt'))
