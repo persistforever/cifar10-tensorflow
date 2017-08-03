@@ -83,11 +83,16 @@ class ConvNet():
         # 模型训练
         for epoch in range(0, n_epoch+1):
             # 数据增强
-            dataloader.data_augmentation(flip=True, crop=True, shape=(24,24,3), whiten=True)
+            train_images = dataloader.data_augmentation(dataloader.train_images, mode='train',
+                flip=True, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
+            train_labels = dataloader.train_labels
+            valid_images = dataloader.data_augmentation(dataloader.valid_images, mode='test',
+                flip=False, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
+            valid_labels = dataloader.valid_labels
             # 开始本轮的训练
             for i in range(0, dataloader.n_train, batch_size):
-                batch_images = dataloader.train_images[i: i+batch_size]
-                batch_labels = dataloader.train_labels[i: i+batch_size]
+                batch_images = train_images[i: i+batch_size]
+                batch_labels = train_labels[i: i+batch_size]
                 [_, avg_loss] = self.sess.run(
                     fetches=[self.optimizer, self.avg_loss], 
                     feed_dict={self.images: batch_images, 
@@ -96,8 +101,8 @@ class ConvNet():
             # 在训练之后，获得本轮的训练集损失值和准确率
             train_accuracy, train_loss = 0.0, 0.0
             for i in range(0, dataloader.n_train, batch_size):
-                batch_images = dataloader.train_images[i: i+batch_size]
-                batch_labels = dataloader.train_labels[i: i+batch_size]
+                batch_images = train_images[i: i+batch_size]
+                batch_labels = train_labels[i: i+batch_size]
                 [avg_accuracy, avg_loss] = self.sess.run(
                     fetches=[self.accuracy, self.avg_loss], 
                     feed_dict={self.images: batch_images, 
@@ -110,8 +115,8 @@ class ConvNet():
             # 在训练之后，获得本轮的验证集损失值和准确率
             valid_accuracy, valid_loss = 0.0, 0.0
             for i in range(0, dataloader.n_valid, batch_size):
-                batch_images = dataloader.valid_images[i: i+batch_size]
-                batch_labels = dataloader.valid_labels[i: i+batch_size]
+                batch_images = valid_images[i: i+batch_size]
+                batch_labels = valid_labels[i: i+batch_size]
                 [avg_accuracy, avg_loss] = self.sess.run(
                     fetches=[self.accuracy, self.avg_loss], 
                     feed_dict={self.images: batch_images, 
@@ -142,9 +147,12 @@ class ConvNet():
         print('read model from %s' % (model_path))
         # 在测试集上计算准确率
         accuracy_list = []
+        test_images = dataloader.data_augmentation(dataloader.test_images,
+            flip=True, crop=True, shape=(24,24,3), whiten=True, noise=False)
+        test_labels = dataloader.test_labels
         for i in range(0, dataloader.n_test, batch_size):
-            batch_images = dataloader.test_images[i: i+batch_size]
-            batch_labels = dataloader.test_labels[i: i+batch_size]
+            batch_images = test_images[i: i+batch_size]
+            batch_labels = test_labels[i: i+batch_size]
             [avg_accuracy] = self.sess.run(
                 fetches=[self.accuracy], 
                 feed_dict={self.images:batch_images, 
