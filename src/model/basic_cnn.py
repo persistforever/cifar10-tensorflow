@@ -25,22 +25,22 @@ class ConvNet():
         # 网络结构
         conv_layer1 = ConvLayer(
             input_shape=(None, image_size, image_size, n_channel), n_size=3, n_filter=64, 
-            stride=1, activation='relu', batch_normal=False, weight_decay=None,
+            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
             name='conv1')
         pool_layer1 = PoolLayer(
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool1')
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool1')
         conv_layer2 = ConvLayer(
             input_shape=(None, int(image_size/2), int(image_size/2), 64), n_size=3, n_filter=128,
-            stride=1, activation='relu', batch_normal=False, weight_decay=None,
+            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
             name='conv2')
         pool_layer2 = PoolLayer(
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool2')
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool2')
         conv_layer3 = ConvLayer(
             input_shape=(None, int(image_size/4), int(image_size/4), 128), n_size=3, n_filter=256, 
-            stride=1, activation='relu', batch_normal=False, weight_decay=None, 
+            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4, 
             name='conv3')
         pool_layer3 = PoolLayer(
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool3')
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool3')
         dense_layer1 = DenseLayer(
             input_shape=(None, int(image_size/8) * int(image_size/8) * 256), hidden_dim=1024, 
             activation='relu', dropout=True, keep_prob=self.keep_prob, 
@@ -48,7 +48,7 @@ class ConvNet():
         dense_layer2 = DenseLayer(
             input_shape=(None, 1024), hidden_dim=n_classes,
             activation='none', dropout=False, keep_prob=None, 
-            batch_normal=False, weight_decay=1e-4, name='dense2')
+            batch_normal=True, weight_decay=1e-4, name='dense2')
         # 数据流
         hidden_conv1 = conv_layer1.get_output(input=self.images)
         hidden_pool1 = pool_layer1.get_output(input=hidden_conv1)
@@ -150,7 +150,7 @@ class ConvNet():
         # 在测试集上计算准确率
         accuracy_list = []
         test_images = dataloader.data_augmentation(dataloader.test_images,
-            flip=True, crop=True, shape=(24,24,3), whiten=True, noise=False)
+            flip=False, crop=True, shape=(24,24,3), whiten=True, noise=False)
         test_labels = dataloader.test_labels
         for i in range(0, dataloader.n_test, batch_size):
             batch_images = test_images[i: i+batch_size]
