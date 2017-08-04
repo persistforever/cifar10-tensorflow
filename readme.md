@@ -56,3 +56,4 @@
 2.  dropout：
 3.  批正则化（batch normalization）：
 4.  LRN：
+
