@@ -4,7 +4,7 @@ import os
 from src.data.cifar10 import Corpus
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 cifar10 = Corpus()
 
@@ -19,10 +19,9 @@ def basic_cnn():
     
 def plain_cnn():
     from src.model.plain_cnn import ConvNet
-    convnet = ConvNet()
     convnet = ConvNet(n_channel=3, n_classes=10, image_size=24)
     # convnet.debug()
-    convnet.train(dataloader=cifar10, backup_path='backup/cifar10-v10/', batch_size=128, n_epoch=5000)
+    convnet.train(dataloader=cifar10, backup_path='backup/cifar10-v11/', batch_size=128, n_epoch=5000)
     # convnet.test(backup_path='backup/cifar10-v3/', epoch=0, batch_size=128)
     # convnet.observe_salience(batch_size=1, n_channel=3, num_test=10, epoch=2)
     # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
@@ -37,4 +36,4 @@ def residual_net():
     # convnet.observe_salience(batch_size=1, n_channel=3, num_test=10, epoch=2)
     # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
 
-basic_cnn()
+plain_cnn()
