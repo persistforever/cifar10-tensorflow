@@ -137,6 +137,7 @@ class ConvNet():
                 epoch <= 10000 and epoch % 1000 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (epoch)))
+        self.sess.close()
                 
     def test(self, dataloader, backup_path, epoch, batch_size=128):
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
@@ -162,6 +163,7 @@ class ConvNet():
                            self.keep_prob:1.0})
             accuracy_list.append(avg_accuracy)
         print('test precision: %.4f' % (numpy.mean(accuracy_list)))
+        self.sess.close()
             
     def debug(self):
         sess = tf.Session()
