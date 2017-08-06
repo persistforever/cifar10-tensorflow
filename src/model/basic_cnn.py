@@ -44,7 +44,7 @@ class ConvNet():
         dense_layer1 = DenseLayer(
             input_shape=(None, int(image_size/8) * int(image_size/8) * 256), hidden_dim=1024, 
             activation='relu', dropout=True, keep_prob=self.keep_prob, 
-            batch_normal=False, weight_decay=1e-4, name='dense1')
+            batch_normal=True, weight_decay=1e-4, name='dense1')
         dense_layer2 = DenseLayer(
             input_shape=(None, 1024), hidden_dim=n_classes,
             activation='none', dropout=False, keep_prob=None, 

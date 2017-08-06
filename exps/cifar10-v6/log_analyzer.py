@@ -31,7 +31,8 @@ def curve_smooth(data_list, batch_size=100):
 def plot_curve(loss_list1, loss_idxs1, train_precision_list1, train_precision_idxs1, valid_precision_list1, valid_precision_idxs1,
 	loss_list2, loss_idxs2, train_precision_list2, train_precision_idxs2, valid_precision_list2, valid_precision_idxs2,
 	loss_list3, loss_idxs3, train_precision_list3, train_precision_idxs3, valid_precision_list3, valid_precision_idxs3,
-	loss_list4, loss_idxs4, train_precision_list4, train_precision_idxs4, valid_precision_list4, valid_precision_idxs4):
+	loss_list4, loss_idxs4, train_precision_list4, train_precision_idxs4, valid_precision_list4, valid_precision_idxs4,
+	loss_list5, loss_idxs5, train_precision_list5, train_precision_idxs5, valid_precision_list5, valid_precision_idxs5):
 	fig = plt.figure()
 	
 	plt.subplot(121)
@@ -39,7 +40,10 @@ def plot_curve(loss_list1, loss_idxs1, train_precision_list1, train_precision_id
 	p2 = plt.plot(loss_idxs2, loss_list2, '.--', color='#FF6347')
 	p3 = plt.plot(loss_idxs3, loss_list3, '.--', color='#4EEE94')
 	p4 = plt.plot(loss_idxs4, loss_list4, '.--', color='#EEC900')
-	plt.legend((p1[0], p2[0], p3[0], p4[0]), ('weight decay', 'weight decay + dropout', 'weight decay + dropout + batch normal', 'weight decay + dropout + batch normal + LRN'))
+	# p5 = plt.plot(loss_idxs5, loss_list5, '.--', color='#9370DB')
+	plt.legend((p1[0], p2[0], p3[0], p4[0]), (
+		'weight decay', 'weight decay + dropout', 'weight decay + dropout + batch normal', 
+		'weight decay + dropout + batch normal + LRN'))
 	plt.grid(True)
 	plt.title('cifar10 image classification loss')
 	plt.xlabel('# of epoch')
@@ -61,7 +65,10 @@ def plot_curve(loss_list1, loss_idxs1, train_precision_list1, train_precision_id
 	p6 = plt.plot(valid_precision_idxs2, valid_precision_list2, '.--', color='#FF6347')
 	p7 = plt.plot(valid_precision_idxs3, valid_precision_list3, '.--', color='#4EEE94')
 	p8 = plt.plot(valid_precision_idxs4, valid_precision_list4, '.--', color='#EEC900')
-	plt.legend((p5[0], p6[0], p7[0], p8[0]), ('weight decay', 'weight decay + dropout', 'weight decay + dropout + batch normal', 'weight decay + dropout + batch normal + LRN'))
+	# p9 = plt.plot(valid_precision_idxs5, valid_precision_list5, '.--', color='#9370DB')
+	plt.legend((p5[0], p6[0], p7[0], p8[0]), (
+		'weight decay', 'weight decay + dropout', 'weight decay + dropout + batch normal',
+		'weight decay + dropout + batch normal + LRN'))
 	plt.grid(True)
 	plt.title('cifar10 image classification valid precision')
 	plt.xlabel('# of epoch')
@@ -76,6 +83,7 @@ loss_list1, train_precision_list1, valid_precision_list1 = load_log('E:\\Github\
 loss_list2, train_precision_list2, valid_precision_list2 = load_log('E:\\Github\cifar10-tensorflow\\exps\cifar10-v6\cifar10-v7.txt')
 loss_list3, train_precision_list3, valid_precision_list3 = load_log('E:\\Github\cifar10-tensorflow\\exps\cifar10-v6\cifar10-v8.txt')
 loss_list4, train_precision_list4, valid_precision_list4 = load_log('E:\\Github\cifar10-tensorflow\\exps\cifar10-v6\cifar10-v9.txt')
+loss_list5, train_precision_list5, valid_precision_list5 = load_log('E:\\Github\cifar10-tensorflow\\exps\cifar10-v6\cifar10-v10.txt')
 
 # print(numpy.array(loss_list[-100:]).mean(), numpy.array(train_precision_list[-100:]).mean())
 loss_list1, loss_idxs1 = curve_smooth(loss_list1, batch_size=10)
@@ -94,7 +102,12 @@ loss_list4, loss_idxs4 = curve_smooth(loss_list4, batch_size=10)
 train_precision_list4, train_precision_idxs4 = curve_smooth(train_precision_list4, batch_size=10)
 valid_precision_list4, valid_precision_idxs4 = curve_smooth(valid_precision_list4, batch_size=10)
 
+loss_list5, loss_idxs5 = curve_smooth(loss_list5, batch_size=10)
+train_precision_list5, train_precision_idxs5 = curve_smooth(train_precision_list5, batch_size=10)
+valid_precision_list5, valid_precision_idxs5 = curve_smooth(valid_precision_list5, batch_size=10)
+
 plot_curve(loss_list1, loss_idxs1, train_precision_list1, train_precision_idxs1, valid_precision_list1, valid_precision_idxs1,
 	loss_list2, loss_idxs2, train_precision_list2, train_precision_idxs2, valid_precision_list2, valid_precision_idxs2,
 	loss_list3, loss_idxs3, train_precision_list3, train_precision_idxs3, valid_precision_list3, valid_precision_idxs3,
-	loss_list4, loss_idxs4, train_precision_list4, train_precision_idxs4, valid_precision_list4, valid_precision_idxs4)
+	loss_list4, loss_idxs4, train_precision_list4, train_precision_idxs4, valid_precision_list4, valid_precision_idxs4,
+	loss_list5, loss_idxs5, train_precision_list5, train_precision_idxs5, valid_precision_list5, valid_precision_idxs5)

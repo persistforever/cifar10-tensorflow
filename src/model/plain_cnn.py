@@ -25,7 +25,6 @@ class ConvNet():
             input_shape=(None, image_size, image_size, n_channel), n_size=3, n_filter=16, 
             stride=2, activation='relu', batch_normal=True, weight_decay=1e-4,
             name='conv1')
-        
         conv_layer2 = ConvLayer(
             input_shape=(None, int(image_size/2), int(image_size/2), 16), n_size=3, n_filter=16,
             stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
@@ -102,14 +101,18 @@ class ConvNet():
             name='conv19')
         
         pool_layer1 = PoolLayer(
-            n_size=int(image_size/8), stride=1, mode='avg', padding='VALID',
+            n_size=2, stride=1, mode='max', padding='SAME',
             resp_normal=True, name='pool1')
         
         dense_layer1 = DenseLayer(
-            input_shape=(None, 64), 
+            input_shape=(None, int(image_size/8) * int(image_size/8) * 64), hidden_dim=1024, 
+            activation='relu', dropout=True, keep_prob=self.keep_prob, 
+            batch_normal=True, weight_decay=1e-4, name='dense1')
+        dense_layer2 = DenseLayer(
+            input_shape=(None, 1024),
             hidden_dim=n_classes,
             activation='none', dropout=False, keep_prob=None, 
-            batch_normal=True, weight_decay=1e-4, name='dense1')
+            batch_normal=True, weight_decay=1e-4, name='dense2')
         
         # 数据流
         hidden_conv1 = conv_layer1.get_output(input=self.images)
@@ -132,8 +135,9 @@ class ConvNet():
         hidden_conv18 = conv_layer18.get_output(input=hidden_conv17)
         hidden_conv19 = conv_layer19.get_output(input=hidden_conv18)
         hidden_pool1 = pool_layer1.get_output(input=hidden_conv19)
-        input_dense1 = tf.reshape(hidden_pool1, [-1, 64])
-        logits = dense_layer1.get_output(input=input_dense1)
+        input_dense1 = tf.reshape(hidden_pool1, [-1, int(image_size/8) * int(image_size/8) * 64])
+        output_dense1 = dense_layer1.get_output(input=input_dense1)
+        logits = dense_layer2.get_output(input=output_dense1)
         
         # 目标函数和优化器
         self.objective = tf.reduce_sum(
