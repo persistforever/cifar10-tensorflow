@@ -19,6 +19,8 @@ class ConvNet():
             dtype=tf.int64, shape=[None], name='labels')
         self.keep_prob = tf.placeholder(
             dtype=tf.float32, name='keep_prob')
+        self.learning_rate = tf.placeholder(
+            dtype=tf.float32, name='learning_rate')
         
         # 网络结构
         conv_layer1 = ConvLayer(
@@ -146,14 +148,14 @@ class ConvNet():
         tf.add_to_collection('losses', self.objective)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         self.optimizer = tf.train.MomentumOptimizer(
-            learning_rate=0.001, momentum=0.9).minimize(self.avg_loss)
+            learning_rate=self.learning_rate, momentum=0.9).minimize(self.avg_loss)
         # 观察值
         correct_prediction = tf.equal(self.labels, tf.argmax(logits, 1))
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
         
     def train(self, dataloader, backup_path, n_epoch=5, batch_size=128):
         # 构建会话
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.65)
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         # 模型保存器
         self.saver = tf.train.Saver(
@@ -162,7 +164,13 @@ class ConvNet():
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
         # 模型训练
+        learning_rate = 0.1
         for epoch in range(0, n_epoch+1):
+            # 调整学习率
+            if epoch == 30000:
+                learning_rate /= 10.0
+            elif epoch == 40000:
+                learning_rate /= 10.0
             # 数据增强
             train_images = dataloader.data_augmentation(dataloader.train_images, mode='train',
                 flip=True, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
@@ -178,7 +186,8 @@ class ConvNet():
                     fetches=[self.optimizer, self.avg_loss], 
                     feed_dict={self.images: batch_images, 
                                self.labels: batch_labels, 
-                               self.keep_prob: 0.5})
+                               self.keep_prob: 0.5,
+                               self.learning_rate: learning_rate})
             # 在训练之后，获得本轮的训练集损失值和准确率
             train_accuracy, train_loss = 0.0, 0.0
             for i in range(0, dataloader.n_train, batch_size):
