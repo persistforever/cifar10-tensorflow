@@ -19,8 +19,8 @@ class ConvNet():
             dtype=tf.int64, shape=[None], name='labels')
         self.keep_prob = tf.placeholder(
             dtype=tf.float32, name='keep_prob')
-        self.learning_rate = tf.placeholder(
-            dtype=tf.float32, name='learning_rate')
+        self.global_step = tf.Variable( 
+            0, dtype=tf.int32, name='global_step')
         
         # 网络结构
         conv_layer1 = ConvLayer(
@@ -102,19 +102,11 @@ class ConvNet():
             stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
             name='conv19')
         
-        pool_layer1 = PoolLayer(
-            n_size=2, stride=1, mode='max', padding='SAME',
-            resp_normal=True, name='pool1')
-        
         dense_layer1 = DenseLayer(
-            input_shape=(None, int(image_size/8) * int(image_size/8) * 64), hidden_dim=1024, 
-            activation='relu', dropout=True, keep_prob=self.keep_prob, 
-            batch_normal=True, weight_decay=1e-4, name='dense1')
-        dense_layer2 = DenseLayer(
-            input_shape=(None, 1024),
+            input_shape=(None, 64),
             hidden_dim=n_classes,
             activation='none', dropout=False, keep_prob=None, 
-            batch_normal=True, weight_decay=1e-4, name='dense2')
+            batch_normal=True, weight_decay=1e-4, name='dense1')
         
         # 数据流
         hidden_conv1 = conv_layer1.get_output(input=self.images)
@@ -136,19 +128,23 @@ class ConvNet():
         hidden_conv17 = conv_layer17.get_output(input=hidden_conv16)
         hidden_conv18 = conv_layer18.get_output(input=hidden_conv17)
         hidden_conv19 = conv_layer19.get_output(input=hidden_conv18)
-        hidden_pool1 = pool_layer1.get_output(input=hidden_conv19)
-        input_dense1 = tf.reshape(hidden_pool1, [-1, int(image_size/8) * int(image_size/8) * 64])
-        output_dense1 = dense_layer1.get_output(input=input_dense1)
-        logits = dense_layer2.get_output(input=output_dense1)
+        # global average pooling
+        input_dense1 = tf.reduce_mean(hidden_conv19, reduction_indices=[1, 2])
+        logits = dense_layer1.get_output(input=input_dense1)
+        self.observe = logits
         
-        # 目标函数和优化器
+        # 目标函数
         self.objective = tf.reduce_sum(
             tf.nn.sparse_softmax_cross_entropy_with_logits(
                 logits=logits, labels=self.labels))
         tf.add_to_collection('losses', self.objective)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
+        # 优化器
+        lr = tf.cond(tf.less(self.global_step, 32000), lambda: tf.constant(0.1), 
+                       lambda: tf.cond(tf.less(self.global_step, 48000), 
+                                 lambda: tf.constant(0.01), lambda: tf.constant(0.001)))
         self.optimizer = tf.train.MomentumOptimizer(
-            learning_rate=self.learning_rate, momentum=0.9).minimize(self.avg_loss)
+            learning_rate=lr, momentum=0.9).minimize(self.avg_loss, global_step=self.global_step)
         # 观察值
         correct_prediction = tf.equal(self.labels, tf.argmax(logits, 1))
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
@@ -164,13 +160,7 @@ class ConvNet():
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
         # 模型训练
-        learning_rate = 0.1
         for epoch in range(0, n_epoch+1):
-            # 调整学习率
-            if epoch == 30000:
-                learning_rate /= 10.0
-            elif epoch == 40000:
-                learning_rate /= 10.0
             # 数据增强
             train_images = dataloader.data_augmentation(dataloader.train_images, mode='train',
                 flip=True, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
@@ -178,23 +168,24 @@ class ConvNet():
             valid_images = dataloader.data_augmentation(dataloader.valid_images, mode='test',
                 flip=False, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
             valid_labels = dataloader.valid_labels
+            
             # 开始本轮的训练
             for i in range(0, dataloader.n_train, batch_size):
                 batch_images = train_images[i: i+batch_size]
                 batch_labels = train_labels[i: i+batch_size]
-                [_, avg_loss] = self.sess.run(
-                    fetches=[self.optimizer, self.avg_loss], 
+                [_, avg_loss, iteration] = self.sess.run(
+                    fetches=[self.optimizer, self.avg_loss, self.global_step], 
                     feed_dict={self.images: batch_images, 
                                self.labels: batch_labels, 
-                               self.keep_prob: 0.5,
-                               self.learning_rate: learning_rate})
+                               self.keep_prob: 0.5})
+                
             # 在训练之后，获得本轮的训练集损失值和准确率
             train_accuracy, train_loss = 0.0, 0.0
             for i in range(0, dataloader.n_train, batch_size):
                 batch_images = train_images[i: i+batch_size]
                 batch_labels = train_labels[i: i+batch_size]
-                [avg_accuracy, avg_loss] = self.sess.run(
-                    fetches=[self.accuracy, self.avg_loss], 
+                [avg_accuracy, avg_loss, iteration] = self.sess.run(
+                    fetches=[self.accuracy, self.avg_loss, self.global_step], 
                     feed_dict={self.images: batch_images, 
                                self.labels: batch_labels, 
                                self.keep_prob: 1.0})
@@ -202,13 +193,14 @@ class ConvNet():
                 train_loss += avg_loss * batch_images.shape[0]
             train_accuracy = 1.0 * train_accuracy / dataloader.n_train
             train_loss = 1.0 * train_loss / dataloader.n_train
+            
             # 在训练之后，获得本轮的验证集损失值和准确率
             valid_accuracy, valid_loss = 0.0, 0.0
             for i in range(0, dataloader.n_valid, batch_size):
                 batch_images = valid_images[i: i+batch_size]
                 batch_labels = valid_labels[i: i+batch_size]
-                [avg_accuracy, avg_loss] = self.sess.run(
-                    fetches=[self.accuracy, self.avg_loss], 
+                [avg_accuracy, avg_loss, iteration] = self.sess.run(
+                    fetches=[self.accuracy, self.avg_loss, self.global_step], 
                     feed_dict={self.images: batch_images, 
                                self.labels: batch_labels, 
                                self.keep_prob: 1.0})
@@ -216,9 +208,11 @@ class ConvNet():
                 valid_loss += avg_loss * batch_images.shape[0]
             valid_accuracy = 1.0 * valid_accuracy / dataloader.n_valid
             valid_loss = 1.0 * valid_loss / dataloader.n_valid
-            print('epoch: %d, train precision: %.6f, train loss: %.6f, valid precision: %.6f, valid loss: %.6f' % (
-                epoch, train_accuracy, train_loss, valid_accuracy, valid_loss))
+            print('epoch: %d, iter: %d, train precision: %.6f, train loss: %.6f, '
+                  'valid precision: %.6f, valid loss: %.6f' % (
+                      epoch, iteration, train_accuracy, train_loss, valid_accuracy, valid_loss))
             sys.stdout.flush()
+            
             # 保存模型
             saver_path = self.saver.save(
                 self.sess, os.path.join(backup_path, 'model.ckpt'))
@@ -262,7 +256,7 @@ class ConvNet():
             feed_dict={self.images: numpy.random.random(size=[128, 24, 24, 3]),
                        self.labels: numpy.random.randint(low=0, high=9, size=[128,]),
                        self.keep_prob: 1.0})
-        print(temp)
+        print(temp.shape)
         self.sess.close()
         
     def observe_salience(self, batch_size=128, image_h=32, image_w=32, n_channel=3, 
