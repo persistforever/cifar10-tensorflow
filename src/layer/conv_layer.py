@@ -34,8 +34,8 @@ class ConvLayer:
         if self.batch_normal:
             self.epsilon = 1e-5
             self.gamma = tf.Variable(
-                initial_value=tf.random_normal(
-                    shape=[self.n_filter]),
+                initial_value=tf.constant(
+                    1.0, shape=[self.n_filter]),
             name='gamma_%s' % (name))
         
     def get_output(self, input):

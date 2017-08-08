@@ -106,7 +106,7 @@ class ConvNet():
             input_shape=(None, 64),
             hidden_dim=n_classes,
             activation='none', dropout=False, keep_prob=None, 
-            batch_normal=False, weight_decay=1e-4, name='dense1')
+            batch_normal=True, weight_decay=1e-4, name='dense1')
         
         # 数据流
         hidden_conv1 = conv_layer1.get_output(input=self.images)
@@ -142,8 +142,8 @@ class ConvNet():
         lr = tf.cond(tf.less(self.global_step, 32000), lambda: tf.constant(0.1), 
                      lambda: tf.cond(tf.less(self.global_step, 48000), 
                                      lambda: tf.constant(0.01), lambda: tf.constant(0.001)))
-        self.optimizer = tf.train.MomentumOptimizer(
-            learning_rate=lr, momentum=0.9).minimize(self.avg_loss, global_step=self.global_step)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(
+            self.avg_loss, global_step=self.global_step)
         # 观察值
         correct_prediction = tf.equal(self.labels, tf.argmax(logits, 1))
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
@@ -183,8 +183,8 @@ class ConvNet():
             for i in range(0, dataloader.n_train, batch_size):
                 batch_images = train_images[i: i+batch_size]
                 batch_labels = train_labels[i: i+batch_size]
-                [avg_accuracy, avg_loss, iteration] = self.sess.run(
-                    fetches=[self.accuracy, self.avg_loss, self.global_step], 
+                [avg_accuracy, avg_loss] = self.sess.run(
+                    fetches=[self.accuracy, self.avg_loss], 
                     feed_dict={self.images: batch_images, 
                                self.labels: batch_labels, 
                                self.keep_prob: 1.0})
@@ -198,8 +198,8 @@ class ConvNet():
             for i in range(0, dataloader.n_valid, batch_size):
                 batch_images = valid_images[i: i+batch_size]
                 batch_labels = valid_labels[i: i+batch_size]
-                [avg_accuracy, avg_loss, iteration] = self.sess.run(
-                    fetches=[self.accuracy, self.avg_loss, self.global_step], 
+                [avg_accuracy, avg_loss] = self.sess.run(
+                    fetches=[self.accuracy, self.avg_loss], 
                     feed_dict={self.images: batch_images, 
                                self.labels: batch_labels, 
                                self.keep_prob: 1.0})
@@ -207,7 +207,7 @@ class ConvNet():
                 valid_loss += avg_loss * batch_images.shape[0]
             valid_accuracy = 1.0 * valid_accuracy / dataloader.n_valid
             valid_loss = 1.0 * valid_loss / dataloader.n_valid
-            print('epoch: %d, iter: %d, train precision: %.6f, train loss: %.6f, '
+            print('epoch{%d}, iter[%d], train precision: %.6f, train loss: %.6f, '
                   'valid precision: %.6f, valid loss: %.6f' % (
                       epoch, iteration, train_accuracy, train_loss, valid_accuracy, valid_loss))
             sys.stdout.flush()
@@ -219,6 +219,7 @@ class ConvNet():
                 epoch <= 10000 and epoch % 1000 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (epoch)))
+                
         self.sess.close()
                 
     def test(self, dataloader, backup_path, epoch, batch_size=128):
