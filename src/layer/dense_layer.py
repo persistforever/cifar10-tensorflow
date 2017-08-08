@@ -34,8 +34,8 @@ class DenseLayer:
         if self.batch_normal:
             self.epsilon = 1e-5
             self.gamma = tf.Variable(
-                initial_value=tf.random_normal(
-                    shape=[self.hidden_dim]),
+                initial_value=tf.constant(
+                    1.0, shape=[self.hidden_dim]),
             name='gamma_%s' % (name))
         # dropout 技术
         if self.dropout:
