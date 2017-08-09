@@ -74,10 +74,12 @@ class ConvNet():
         tf.add_to_collection('losses', self.objective)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         # 优化器
-        # lr = tf.cond(tf.less(self.global_step, 100000), 
-        #              lambda: tf.constant(0.01), 
-        #              lambda: tf.constant(0.001))
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(
+        lr = tf.cond(tf.less(self.global_step, 100000), 
+                     lambda: tf.constant(0.01),
+                     tf.cond(tf.less(self.global_step, 200000), 
+                             lambda: tf.constant(0.001),
+                             lambda: tf.constant(0.0001)))
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(
             self.avg_loss, global_step=self.global_step)
         
         # 观察值
@@ -104,7 +106,7 @@ class ConvNet():
                 flip=False, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
             valid_labels = dataloader.valid_labels
             
-            # 开始本轮的训练
+            # 开始本轮的训练，并计算目标函数值
             train_loss = 0.0
             for i in range(0, dataloader.n_train, batch_size):
                 batch_images = train_images[i: i+batch_size]
@@ -117,22 +119,7 @@ class ConvNet():
                 
                 train_loss += avg_loss * batch_images.shape[0]
             train_loss = 1.0 * train_loss / dataloader.n_train
-            """
-            # 在训练之后，获得本轮的训练集损失值和准确率
-            train_accuracy, train_loss = 0.0, 0.0
-            for i in range(0, dataloader.n_train, batch_size):
-                batch_images = train_images[i: i+batch_size]
-                batch_labels = train_labels[i: i+batch_size]
-                [avg_accuracy, avg_loss] = self.sess.run(
-                    fetches=[self.accuracy, self.avg_loss], 
-                    feed_dict={self.images: batch_images, 
-                               self.labels: batch_labels, 
-                               self.keep_prob: 1.0})
-                train_accuracy += avg_accuracy * batch_images.shape[0]
-                train_loss += avg_loss * batch_images.shape[0]
-            train_accuracy = 1.0 * train_accuracy / dataloader.n_train
-            train_loss = 1.0 * train_loss / dataloader.n_train
-            """
+            
             # 在训练之后，获得本轮的验证集损失值和准确率
             valid_accuracy, valid_loss = 0.0, 0.0
             for i in range(0, dataloader.n_valid, batch_size):
@@ -147,9 +134,10 @@ class ConvNet():
                 valid_loss += avg_loss * batch_images.shape[0]
             valid_accuracy = 1.0 * valid_accuracy / dataloader.n_valid
             valid_loss = 1.0 * valid_loss / dataloader.n_valid
-            print('epoch{%d}, iter[%d], train precision: %.6f, train loss: %.6f, '
+            
+            print('epoch{%d}, iter[%d], train loss: %.6f, '
                   'valid precision: %.6f, valid loss: %.6f' % (
-                epoch, iteration, 1.0, train_loss, valid_accuracy, valid_loss))
+                epoch, iteration, train_loss, valid_accuracy, valid_loss))
             sys.stdout.flush()
             
             # 保存模型
