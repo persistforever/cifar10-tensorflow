@@ -4,7 +4,7 @@ import os
 from src.data.cifar10 import Corpus
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 cifar10 = Corpus()
 

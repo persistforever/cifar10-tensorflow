@@ -32,7 +32,7 @@ def plot_curve(loss_list1, loss_idxs1, train_precision_list1, train_precision_id
 	loss_list2, loss_idxs2, train_precision_list2, train_precision_idxs2, valid_precision_list2, valid_precision_idxs2,
 	loss_list3, loss_idxs3, train_precision_list3, train_precision_idxs3, valid_precision_list3, valid_precision_idxs3,
 	loss_list4, loss_idxs4, train_precision_list4, train_precision_idxs4, valid_precision_list4, valid_precision_idxs4):
-	fig = plt.figure()
+	fig = plt.figure(figsize=(10, 5))
 	
 	plt.subplot(121)
 	p1 = plt.plot(loss_idxs1, loss_list1, '.--', color='#6495ED')
@@ -68,8 +68,8 @@ def plot_curve(loss_list1, loss_idxs1, train_precision_list1, train_precision_id
 	plt.ylabel('accuracy')
 	plt.axis([0, 5000, 0.5, 0.9])
 
-	plt.show()
-	# plt.savefig('E:\\Github\cifar10-tensorflow\\results\cifar10-v1\cifar10-v1.png', dpi=120, format='png')
+	# plt.show()
+	plt.savefig('E:\\Github\cifar10-tensorflow\\exps\cifar10-v2\cifar10-v2.png', dpi=72, format='png')
 
 
 loss_list1, train_precision_list1, valid_precision_list1 = load_log('E:\\Github\cifar10-tensorflow\\exps\cifar10-v2\cifar10-v3.txt')
