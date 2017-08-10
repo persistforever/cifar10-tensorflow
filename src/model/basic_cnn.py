@@ -160,7 +160,7 @@ class ConvNet():
         # 在测试集上计算准确率
         accuracy_list = []
         test_images = dataloader.data_augmentation(dataloader.test_images,
-            flip=False, crop=True, shape=(24,24,3), whiten=True, noise=False)
+            flip=False, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
         test_labels = dataloader.test_labels
         for i in range(0, dataloader.n_test, batch_size):
             batch_images = test_images[i: i+batch_size]
