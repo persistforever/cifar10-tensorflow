@@ -39,10 +39,8 @@ class ConvNet():
         # 优化器
         lr = tf.cond(tf.less(self.global_step, 50000), 
                      lambda: tf.constant(0.01),
-                     lambda: tf.cond(tf.less(self.global_step, 100000), 
-                                     lambda: tf.constant(0.001),
-                                     lambda: tf.constant(0.0001)))
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(
+                     lambda: tf.constant(0.001))
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(
             self.avg_loss, global_step=self.global_step)
         
         # 观察值
