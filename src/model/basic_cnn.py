@@ -74,9 +74,9 @@ class ConvNet():
         tf.add_to_collection('losses', self.objective)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         # 优化器
-        lr = tf.cond(tf.less(self.global_step, 100000), 
+        lr = tf.cond(tf.less(self.global_step, 50000), 
                      lambda: tf.constant(0.01),
-                     lambda: tf.cond(tf.less(self.global_step, 200000), 
+                     lambda: tf.cond(tf.less(self.global_step, 100000), 
                                      lambda: tf.constant(0.001),
                                      lambda: tf.constant(0.0001)))
         self.optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(
