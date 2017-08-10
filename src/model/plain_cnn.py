@@ -12,130 +12,28 @@ from src.layer.pool_layer import PoolLayer
 class ConvNet():
     
     def __init__(self, n_channel=3, n_classes=10, image_size=24):
+        # 设置超参数
+        self.n_channel = n_channel
+        self.n_classes = n_classes
+        self.image_size = image_size
+        
         # 输入变量
         self.images = tf.placeholder(
-            dtype=tf.float32, shape=[None, image_size, image_size, n_channel], name='images')
+            dtype=tf.float32, shape=[None, self.image_size, self.image_size, self.n_channel], 
+            name='images')
         self.labels = tf.placeholder(
             dtype=tf.int64, shape=[None], name='labels')
         self.keep_prob = tf.placeholder(
             dtype=tf.float32, name='keep_prob')
-        self.global_step = tf.Variable( 
+        self.global_step = tf.Variable(
             0, dtype=tf.int32, name='global_step')
         
-        # 网络结构
-        conv_layer1 = ConvLayer(
-            input_shape=(None, image_size, image_size, n_channel), n_size=3, n_filter=16, 
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv1')
-        conv_layer2 = ConvLayer(
-            input_shape=(None, image_size, image_size, 16), n_size=3, n_filter=16,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv2')
-        conv_layer3 = ConvLayer(
-            input_shape=(None, image_size, image_size, 16), n_size=3, n_filter=16,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv3')
-        conv_layer4 = ConvLayer(
-            input_shape=(None, image_size, image_size, 16), n_size=3, n_filter=16,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv4')
-        conv_layer5 = ConvLayer(
-            input_shape=(None, image_size, image_size, 16), n_size=3, n_filter=16,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv5')
-        conv_layer6 = ConvLayer(
-            input_shape=(None, image_size, image_size, 16), n_size=3, n_filter=16,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv6')
-        conv_layer7 = ConvLayer(
-            input_shape=(None, image_size, image_size, 16), n_size=3, n_filter=16,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv7')
-        
-        conv_layer8 = ConvLayer(
-            input_shape=(None, image_size, image_size, 16), n_size=3, n_filter=32,
-            stride=2, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv8')
-        conv_layer9 = ConvLayer(
-            input_shape=(None, int(image_size/2), int(image_size/2), 32), n_size=3, n_filter=32,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv9')
-        conv_layer10 = ConvLayer(
-            input_shape=(None, int(image_size/2), int(image_size/2), 32), n_size=3, n_filter=32,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv10')
-        conv_layer11 = ConvLayer(
-            input_shape=(None, int(image_size/2), int(image_size/2), 32), n_size=3, n_filter=32,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv11')
-        conv_layer12 = ConvLayer(
-            input_shape=(None, int(image_size/2), int(image_size/2), 32), n_size=3, n_filter=32,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv12')
-        conv_layer13 = ConvLayer(
-            input_shape=(None, int(image_size/2), int(image_size/2), 32), n_size=3, n_filter=32,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv13')
-        
-        conv_layer14 = ConvLayer(
-            input_shape=(None, int(image_size/2), int(image_size/2), 32), n_size=3, n_filter=64,
-            stride=2, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv14')
-        conv_layer15 = ConvLayer(
-            input_shape=(None, int(image_size/4), int(image_size/4), 64), n_size=3, n_filter=64,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv15')
-        conv_layer16 = ConvLayer(
-            input_shape=(None, int(image_size/4), int(image_size/4), 64), n_size=3, n_filter=64,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv16')
-        conv_layer17 = ConvLayer(
-            input_shape=(None, int(image_size/4), int(image_size/4), 64), n_size=3, n_filter=64,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv17')
-        conv_layer18 = ConvLayer(
-            input_shape=(None, int(image_size/4), int(image_size/4), 64), n_size=3, n_filter=64,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv18')
-        conv_layer19 = ConvLayer(
-            input_shape=(None, int(image_size/4), int(image_size/4), 64), n_size=3, n_filter=64,
-            stride=1, activation='relu', batch_normal=True, weight_decay=1e-4,
-            name='conv19')
-        
-        dense_layer1 = DenseLayer(
-            input_shape=(None, 64),
-            hidden_dim=n_classes,
-            activation='none', dropout=False, keep_prob=None, 
-            batch_normal=True, weight_decay=1e-4, name='dense1')
-        
-        # 数据流
-        hidden_conv1 = conv_layer1.get_output(input=self.images)
-        hidden_conv2 = conv_layer2.get_output(input=hidden_conv1)
-        hidden_conv3 = conv_layer3.get_output(input=hidden_conv2)
-        hidden_conv4 = conv_layer4.get_output(input=hidden_conv3)
-        hidden_conv5 = conv_layer5.get_output(input=hidden_conv4)
-        hidden_conv6 = conv_layer6.get_output(input=hidden_conv5)
-        hidden_conv7 = conv_layer7.get_output(input=hidden_conv6)
-        hidden_conv8 = conv_layer8.get_output(input=hidden_conv7)
-        hidden_conv9 = conv_layer9.get_output(input=hidden_conv8)
-        hidden_conv10 = conv_layer10.get_output(input=hidden_conv9)
-        hidden_conv11 = conv_layer11.get_output(input=hidden_conv10)
-        hidden_conv12 = conv_layer12.get_output(input=hidden_conv11)
-        hidden_conv13 = conv_layer13.get_output(input=hidden_conv12)
-        hidden_conv14 = conv_layer14.get_output(input=hidden_conv13)
-        hidden_conv15 = conv_layer15.get_output(input=hidden_conv14)
-        hidden_conv16 = conv_layer16.get_output(input=hidden_conv15)
-        hidden_conv17 = conv_layer17.get_output(input=hidden_conv16)
-        hidden_conv18 = conv_layer18.get_output(input=hidden_conv17)
-        hidden_conv19 = conv_layer19.get_output(input=hidden_conv18)
-        # global average pooling
-        input_dense1 = tf.reduce_mean(hidden_conv19, reduction_indices=[1, 2])
-        logits = dense_layer1.get_output(input=input_dense1)
-        
+        # 网络输出
+        self.logits = self.inference(self.images)
         # 目标函数
         self.objective = tf.reduce_sum(
             tf.nn.sparse_softmax_cross_entropy_with_logits(
-                logits=logits, labels=self.labels))
+                logits=self.logits, labels=self.labels))
         tf.add_to_collection('losses', self.objective)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         # 优化器
@@ -148,8 +46,69 @@ class ConvNet():
             self.avg_loss, global_step=self.global_step)
         
         # 观察值
-        correct_prediction = tf.equal(self.labels, tf.argmax(logits, 1))
+        correct_prediction = tf.equal(self.labels, tf.argmax(self.logits, 1))
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
+        
+    def inference(self, images):
+        # 网络结构
+        conv_layer1_list = []
+        conv_layer1_list.append(
+            ConvLayer(
+                input_shape=(None, self.image_size, self.image_size, self.n_channel), 
+                n_size=3, n_filter=16, stride=1, activation='relu', 
+                batch_normal=True, weight_decay=1e-4, name='conv1_1'))
+        for i in range(5):
+            conv_layer1_list.append(
+                ConvLayer(
+                    input_shape=(None, self.image_size, self.image_size, 16), 
+                    n_size=3, n_filter=16, stride=1, activation='relu', 
+                    batch_normal=True, weight_decay=1e-4, name='conv1_%d' % (i+2)))
+        
+        conv_layer2_list = []
+        conv_layer2_list.append(
+            ConvLayer(
+                input_shape=(None, self.image_size, self.image_size, 16), 
+                n_size=3, n_filter=32, stride=2, activation='relu', 
+                batch_normal=True, weight_decay=1e-4, name='conv2_1'))
+        for i in range(5):
+            conv_layer2_list.append(
+                ConvLayer(
+                    input_shape=(None, int(self.image_size/2), int(self.image_size/2), 32), 
+                    n_size=3, n_filter=32, stride=1, activation='relu', 
+                    batch_normal=True, weight_decay=1e-4, name='conv2_%d' % (i+2)))
+        
+        conv_layer3_list = []
+        conv_layer3_list.append(
+            ConvLayer(
+                input_shape=(None, int(self.image_size/2), int(self.image_size/2), 32), 
+                n_size=3, n_filter=64, stride=2, activation='relu', 
+                batch_normal=True, weight_decay=1e-4, name='conv3_1'))
+        for i in range(5):
+            conv_layer3_list.append(
+                ConvLayer(
+                    input_shape=(None, int(self.image_size/4), int(self.image_size/4), 64), 
+                    n_size=3, n_filter=64, stride=1, activation='relu', 
+                    batch_normal=True, weight_decay=1e-4, name='conv3_%d' % (i+2)))
+        
+        dense_layer1 = DenseLayer(
+            input_shape=(None, 64),
+            hidden_dim=self.n_classes,
+            activation='none', dropout=False, keep_prob=None, 
+            batch_normal=True, weight_decay=1e-4, name='dense1')
+        
+        # 数据流
+        hidden_conv = images
+        for i in range(6):
+            hidden_conv = conv_layer1_list[i].get_output(input=hidden_conv)
+        for i in range(6):
+            hidden_conv = conv_layer2_list[i].get_output(input=hidden_conv)
+        for i in range(6):
+            hidden_conv = conv_layer3_list[i].get_output(input=hidden_conv)
+        # global average pooling
+        input_dense1 = tf.reduce_mean(hidden_conv, reduction_indices=[1, 2])
+        logits = dense_layer1.get_output(input=input_dense1)
+        
+        return logits
         
     def train(self, dataloader, backup_path, n_epoch=5, batch_size=128):
         # 构建会话
