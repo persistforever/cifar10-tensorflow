@@ -115,7 +115,7 @@ class ConvNet():
         # 模型保存器
         self.saver = tf.train.Saver(
             var_list=tf.global_variables(), write_version=tf.train.SaverDef.V2, 
-            max_to_keep=10)
+            max_to_keep=5)
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
         # 模型训练
