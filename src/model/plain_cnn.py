@@ -139,11 +139,14 @@ class ConvNet():
         tf.add_to_collection('losses', self.objective)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         # 优化器
-        lr = tf.cond(tf.less(self.global_step, 32000), lambda: tf.constant(0.1), 
-                     lambda: tf.cond(tf.less(self.global_step, 48000), 
-                                     lambda: tf.constant(0.01), lambda: tf.constant(0.001)))
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(
+        lr = tf.cond(tf.less(self.global_step, 50000), 
+                     lambda: tf.constant(0.01),
+                     lambda: tf.cond(tf.less(self.global_step, 100000), 
+                                     lambda: tf.constant(0.001),
+                                     lambda: tf.constant(0.0001)))
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(
             self.avg_loss, global_step=self.global_step)
+        
         # 观察值
         correct_prediction = tf.equal(self.labels, tf.argmax(logits, 1))
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
@@ -155,7 +158,7 @@ class ConvNet():
         # 模型保存器
         self.saver = tf.train.Saver(
             var_list=tf.global_variables(), write_version=tf.train.SaverDef.V2, 
-            max_to_keep=1000)
+            max_to_keep=10)
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
         # 模型训练
@@ -168,7 +171,8 @@ class ConvNet():
                 flip=False, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
             valid_labels = dataloader.valid_labels
             
-            # 开始本轮的训练
+            # 开始本轮的训练，并计算目标函数值
+            train_loss = 0.0
             for i in range(0, dataloader.n_train, batch_size):
                 batch_images = train_images[i: i+batch_size]
                 batch_labels = train_labels[i: i+batch_size]
@@ -178,19 +182,7 @@ class ConvNet():
                                self.labels: batch_labels, 
                                self.keep_prob: 0.5})
                 
-            # 在训练之后，获得本轮的训练集损失值和准确率
-            train_accuracy, train_loss = 0.0, 0.0
-            for i in range(0, dataloader.n_train, batch_size):
-                batch_images = train_images[i: i+batch_size]
-                batch_labels = train_labels[i: i+batch_size]
-                [avg_accuracy, avg_loss] = self.sess.run(
-                    fetches=[self.accuracy, self.avg_loss], 
-                    feed_dict={self.images: batch_images, 
-                               self.labels: batch_labels, 
-                               self.keep_prob: 1.0})
-                train_accuracy += avg_accuracy * batch_images.shape[0]
                 train_loss += avg_loss * batch_images.shape[0]
-            train_accuracy = 1.0 * train_accuracy / dataloader.n_train
             train_loss = 1.0 * train_loss / dataloader.n_train
             
             # 在训练之后，获得本轮的验证集损失值和准确率
@@ -207,15 +199,14 @@ class ConvNet():
                 valid_loss += avg_loss * batch_images.shape[0]
             valid_accuracy = 1.0 * valid_accuracy / dataloader.n_valid
             valid_loss = 1.0 * valid_loss / dataloader.n_valid
-            print('epoch{%d}, iter[%d], train precision: %.6f, train loss: %.6f, '
+            
+            print('epoch{%d}, iter[%d], train loss: %.6f, '
                   'valid precision: %.6f, valid loss: %.6f' % (
-                      epoch, iteration, train_accuracy, train_loss, valid_accuracy, valid_loss))
+                epoch, iteration, train_loss, valid_accuracy, valid_loss))
             sys.stdout.flush()
             
             # 保存模型
-            saver_path = self.saver.save(
-                self.sess, os.path.join(backup_path, 'model.ckpt'))
-            if epoch <= 100 and epoch % 10 == 0 or epoch <= 1000 and epoch % 100 == 0 or \
+            if epoch <= 1000 and epoch % 100 == 0 or \
                 epoch <= 10000 and epoch % 1000 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (epoch)))
@@ -234,7 +225,7 @@ class ConvNet():
         # 在测试集上计算准确率
         accuracy_list = []
         test_images = dataloader.data_augmentation(dataloader.test_images,
-            flip=False, crop=True, shape=(24,24,3), whiten=True, noise=False)
+            flip=False, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
         test_labels = dataloader.test_labels
         for i in range(0, dataloader.n_test, batch_size):
             batch_images = test_images[i: i+batch_size]
@@ -249,102 +240,11 @@ class ConvNet():
         self.sess.close()
             
     def debug(self):
-        self.sess = tf.Session()
-        self.sess.run(tf.global_variables_initializer())
-        [temp] = self.sess.run(
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+        [temp] = sess.run(
             fetches=[self.observe],
             feed_dict={self.images: numpy.random.random(size=[128, 24, 24, 3]),
                        self.labels: numpy.random.randint(low=0, high=9, size=[128,]),
                        self.keep_prob: 1.0})
-        print(temp.shape)
-        self.sess.close()
-        
-    def observe_salience(self, batch_size=128, image_h=32, image_w=32, n_channel=3, 
-                         num_test=10, epoch=1):
-        if not os.path.exists('results/epoch%d/' % (epoch)):
-            os.makedirs('results/epoch%d/' % (epoch))
-        saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
-        sess = tf.Session()
-        # 读取模型
-        model_path = 'backup/cifar10/model_%d.ckpt' % (epoch)
-        assert(os.path.exists(model_path+'.index'))
-        saver.restore(sess, model_path)
-        print('read model from %s' % (model_path))
-        # 获取图像并计算梯度
-        for batch in range(num_test):
-            batch_image, batch_label = cifar10.test.next_batch(batch_size)
-            image = numpy.array(batch_image.reshape([image_h, image_w, n_channel]) * 255,
-                                dtype='uint8')
-            result = sess.run([self.labels_prob, self.labels_max_prob, self.labels_pred,
-                               self.gradient],
-                              feed_dict={self.images:batch_image, self.labels:batch_label,
-                                         self.keep_prob:0.5})
-            print(result[0:3], result[3][0].shape)
-            gradient = sess.run(self.gradient, feed_dict={
-                self.images:batch_image, self.keep_prob:0.5})
-            gradient = gradient[0].reshape([image_h, image_w, n_channel])
-            gradient = numpy.max(gradient, axis=2)
-            gradient = numpy.array((gradient - gradient.min()) * 255
-                                    / (gradient.max() - gradient.min()), dtype='uint8')
-            print(gradient.shape)
-            # 使用pyplot画图
-            plt.subplot(121)
-            plt.imshow(image)
-            plt.subplot(122)
-            plt.imshow(gradient, cmap=plt.cm.gray)
-            plt.savefig('results/epoch%d/result_%d.png' % (epoch, batch))
-        
-    def observe_hidden_distribution(self, batch_size=128, image_h=32, image_w=32, n_channel=3, 
-                                    num_test=10, epoch=1):
-        if not os.path.exists('results/epoch%d/' % (epoch)):
-            os.makedirs('results/epoch%d/' % (epoch))
-        saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
-        sess = tf.Session()
-        # 读取模型
-        model_path = 'backup/cifar10/model_%d.ckpt' % (epoch)
-        if os.path.exists(model_path+'.index'):
-            saver.restore(sess, model_path)
-            print('read model from %s' % (model_path))
-        else:
-            sess.run(tf.global_variables_initializer())
-        # 获取图像并计算梯度
-        for batch in range(num_test):
-            batch_image, batch_label = cifar10.test.next_batch(batch_size)
-            result = sess.run([self.nobn_conv1, self.bn_conv1, self.nobn_conv2, self.bn_conv2,
-                               self.nobn_conv3, self.bn_conv3, self.nobn_fc1, self.nobn_fc1,
-                               self.nobn_softmax, self.bn_softmax],
-                              feed_dict={self.images:batch_image, self.labels:batch_label,
-                                         self.keep_prob:0.5})
-            distribution1 = result[0][:,0].flatten()
-            distribution2 = result[1][:,0].flatten()
-            distribution3 = result[2][:,0].flatten()
-            distribution4 = result[3][:,0].flatten()
-            distribution5 = result[4][:,0].flatten()
-            distribution6 = result[5][:,0].flatten()
-            distribution7 = result[6][:,0].flatten()
-            distribution8 = result[7][:,0].flatten()
-            plt.subplot(241)
-            plt.hist(distribution1, bins=50, color='#1E90FF')
-            plt.title('convolutional layer 1')
-            plt.subplot(242)
-            plt.hist(distribution3, bins=50, color='#1C86EE')
-            plt.title('convolutional layer 2')
-            plt.subplot(243)
-            plt.hist(distribution5, bins=50, color='#1874CD')
-            plt.title('convolutional layer 3')
-            plt.subplot(244)
-            plt.hist(distribution7, bins=50, color='#5CACEE')
-            plt.title('full connection layer')
-            plt.subplot(245)
-            plt.hist(distribution2, bins=50, color='#00CED1')
-            plt.title('batch normalized')
-            plt.subplot(246)
-            plt.hist(distribution4, bins=50, color='#48D1CC')
-            plt.title('batch normalized')
-            plt.subplot(247)
-            plt.hist(distribution6, bins=50, color='#40E0D0')
-            plt.title('batch normalized')
-            plt.subplot(248)
-            plt.hist(distribution8, bins=50, color='#00FFFF')
-            plt.title('batch normalized')
-            plt.show()
+        print(temp)

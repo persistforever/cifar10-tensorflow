@@ -5,8 +5,6 @@ import os
 import numpy
 import matplotlib.pyplot as plt
 import tensorflow as tf
-import src.data.cifar10 as cifar10
-from src.model.network import Network
 from src.layer.conv_layer import ConvLayer
 from src.layer.dense_layer import DenseLayer
 from src.layer.pool_layer import PoolLayer
@@ -16,9 +14,9 @@ class ConvNet():
     def __init__(self, n_channel=3, n_classes=10, image_size=24):
         # 输入变量
         self.images = tf.placeholder(
-            dtype=tf.float32, shape=[None, image_size, image_size, n_channel], name='image')
+            dtype=tf.float32, shape=[None, image_size, image_size, n_channel], name='images')
         self.labels = tf.placeholder(
-            dtype=tf.int64, shape=[None], name='label')
+            dtype=tf.int64, shape=[None], name='labels')
         self.keep_prob = tf.placeholder(
             dtype=tf.float32, name='keep_prob')
         self.global_step = tf.Variable( 
