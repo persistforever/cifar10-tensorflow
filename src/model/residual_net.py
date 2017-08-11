@@ -53,6 +53,8 @@ class ConvNet():
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
         
     def inference(self, images):
+        n_layers = 5
+        
         # 网络结构
         conv_layer0_list = []
         conv_layer0_list.append(
@@ -62,7 +64,7 @@ class ConvNet():
                 batch_normal=True, weight_decay=1e-4, name='conv0'))
         
         conv_layer1_list = []
-        for i in range(1,4):
+        for i in range(1, n_layers+1):
             conv_layer1_list.append(
                 ConvLayer(
                     input_shape=(None, self.image_size, self.image_size, 16), 
@@ -85,7 +87,7 @@ class ConvNet():
                 input_shape=(None, int(self.image_size)/2, int(self.image_size)/2, 32), 
                 n_size=3, n_filter=32, stride=1, activation='none', 
                 batch_normal=True, weight_decay=1e-4, name='conv2_2'))
-        for i in range(2,4):
+        for i in range(2, n_layers+1):
             conv_layer2_list.append(
                 ConvLayer(
                     input_shape=(None, int(self.image_size/2), int(self.image_size/2), 32), 
@@ -108,7 +110,7 @@ class ConvNet():
                 input_shape=(None, int(self.image_size/4), int(self.image_size/4), 64), 
                 n_size=3, n_filter=64, stride=1, activation='relu', 
                 batch_normal=True, weight_decay=1e-4, name='conv3_2'))
-        for i in range(2,4):
+        for i in range(2, n_layers+1):
             conv_layer3_list.append(
                 ConvLayer(
                     input_shape=(None, int(self.image_size/4), int(self.image_size/4), 64), 
@@ -129,7 +131,7 @@ class ConvNet():
         # 数据流
         hidden_conv = conv_layer0_list[0].get_output(input=images)
         
-        for i in range(0,3):
+        for i in range(0, n_layers):
             hidden_conv1 = conv_layer1_list[2*i].get_output(input=hidden_conv)
             hidden_conv2 = conv_layer1_list[2*i+1].get_output(input=hidden_conv1)
             hidden_conv = tf.nn.relu(hidden_conv + hidden_conv2)
@@ -140,7 +142,7 @@ class ConvNet():
             hidden_conv, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')
         hidden_pad = tf.pad(hidden_pool, [[0,0], [0,0], [0,0], [8,8]])
         hidden_conv = tf.nn.relu(hidden_pad + hidden_conv2)
-        for i in range(1,3):
+        for i in range(1, n_layers):
             hidden_conv1 = conv_layer2_list[2*i].get_output(input=hidden_conv)
             hidden_conv2 = conv_layer2_list[2*i+1].get_output(input=hidden_conv1)
             hidden_conv = tf.nn.relu(hidden_conv + hidden_conv2)
@@ -151,7 +153,7 @@ class ConvNet():
             hidden_conv, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')
         hidden_pad = tf.pad(hidden_pool, [[0,0], [0,0], [0,0], [16,16]])
         hidden_conv = tf.nn.relu(hidden_pad + hidden_conv2)
-        for i in range(1,3):
+        for i in range(1, n_layers):
             hidden_conv1 = conv_layer3_list[2*i].get_output(input=hidden_conv)
             hidden_conv2 = conv_layer3_list[2*i+1].get_output(input=hidden_conv1)
             hidden_conv = tf.nn.relu(hidden_conv + hidden_conv2)
