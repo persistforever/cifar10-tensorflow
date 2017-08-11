@@ -164,7 +164,7 @@ class ConvNet():
         
     def train(self, dataloader, backup_path, n_epoch=5, batch_size=128):
         # 构建会话
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.2)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         # 模型保存器
         self.saver = tf.train.Saver(
