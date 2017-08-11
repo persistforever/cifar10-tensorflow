@@ -58,5 +58,7 @@ class ConvLayer:
             self.output = tf.nn.relu(self.hidden)
         elif self.activation == 'tanh':
             self.output = tf.nn.tanh(self.hidden)
+        elif self.activation == 'none':
+            self.output = self.hidden
         
         return self.output
