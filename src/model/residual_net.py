@@ -174,15 +174,17 @@ class ConvNet():
             max_to_keep=5)
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
+        
+        # 验证集数据增强
+        valid_images = dataloader.data_augmentation(dataloader.valid_images, mode='test',
+            flip=False, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
+        valid_labels = dataloader.valid_labels
         # 模型训练
         for epoch in range(0, n_epoch+1):
-            # 数据增强
+            # 训练集数据增强
             train_images = dataloader.data_augmentation(dataloader.train_images, mode='train',
                 flip=True, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
             train_labels = dataloader.train_labels
-            valid_images = dataloader.data_augmentation(dataloader.valid_images, mode='test',
-                flip=False, crop=True, crop_shape=(24,24,3), whiten=True, noise=False)
-            valid_labels = dataloader.valid_labels
             
             # 开始本轮的训练，并计算目标函数值
             train_loss = 0.0

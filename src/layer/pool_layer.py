@@ -1,4 +1,4 @@
-# -*- encoding: utf8 -*-
+# -*- coding: utf8 -*-
 # author: ronniecao
 import numpy
 import tensorflow as tf
@@ -24,11 +24,14 @@ class PoolLayer:
             self.pool = tf.nn.avg_pool(
                 value=input, ksize=[1, self.n_size, self.n_size, 1],
                 strides=[1, self.stride, self.stride, 1], padding=self.padding)
+        
+        # response normal 技术
         if self.resp_normal:
             self.hidden = tf.nn.local_response_normalization(
                 self.pool, depth_radius=7, alpha=0.001, beta=0.75)
         else:
             self.hidden = self.pool
+            
         self.output = self.hidden
         
         return self.output

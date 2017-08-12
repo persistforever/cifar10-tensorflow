@@ -1,4 +1,4 @@
-# -*- encoding: utf8 -*-
+# -*- coding: utf8 -*-
 # author: ronniecao
 import numpy
 import tensorflow as tf
@@ -15,6 +15,7 @@ class ConvLayer:
         self.stride = stride
         self.batch_normal = batch_normal
         self.weight_decay = weight_decay
+        
         # 权重矩阵
         self.weight = tf.Variable(
             initial_value=tf.truncated_normal(
@@ -22,14 +23,18 @@ class ConvLayer:
                 mean=0.0, stddev=numpy.sqrt(
                     2.0 / (self.input_shape[1] * self.input_shape[2] * self.input_shape[3]))),
             name='W_%s' % (name))
+        
+        # weight decay技术
         if self.weight_decay:
             weight_decay = tf.multiply(tf.nn.l2_loss(self.weight), self.weight_decay)
             tf.add_to_collection('losses', weight_decay)
+            
         # 偏置向量
         self.bias = tf.Variable(
             initial_value=tf.constant(
                 0.0, shape=[self.n_filter]),
             name='b_%s' % (name))
+        
         # batch normalization 技术的参数
         if self.batch_normal:
             self.epsilon = 1e-5
@@ -46,6 +51,7 @@ class ConvLayer:
         self.conv = tf.nn.conv2d(
             input=input, filter=self.weight, 
             strides=[1, self.stride, self.stride, 1], padding='SAME')
+        
         # batch normalization 技术
         if self.batch_normal:
             mean, variance = tf.nn.moments(self.conv, axes=[0, 1, 2], keep_dims=False)
@@ -53,6 +59,7 @@ class ConvLayer:
                 self.conv, mean, variance, self.bias, self.gamma, self.epsilon)
         else:
             self.hidden = self.conv + self.bias
+            
         # activation
         if self.activation == 'relu':
             self.output = tf.nn.relu(self.hidden)
