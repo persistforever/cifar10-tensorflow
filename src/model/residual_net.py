@@ -11,11 +11,12 @@ from src.layer.pool_layer import PoolLayer
 
 class ConvNet():
     
-    def __init__(self, n_channel=3, n_classes=10, image_size=24):
+    def __init__(self, n_channel=3, n_classes=10, image_size=24, n_layers=20):
         # 设置超参数
         self.n_channel = n_channel
         self.n_classes = n_classes
         self.image_size = image_size
+        self.n_layers = n_layers
         
         # 输入变量
         self.images = tf.placeholder(
@@ -53,8 +54,7 @@ class ConvNet():
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
         
     def inference(self, images):
-        n_layers = 5
-        
+        n_layers = int((self.n_layers - 2) / 6)
         # 网络结构
         conv_layer0_list = []
         conv_layer0_list.append(
