@@ -126,7 +126,7 @@ class ConvNet():
             input_shape=(None, 64),
             hidden_dim=self.n_classes,
             activation='none', dropout=False, keep_prob=None, 
-            batch_normal=True, weight_decay=1e-4, name='dense1')
+            batch_normal=False, weight_decay=1e-4, name='dense1')
         
         # 数据流
         hidden_conv = conv_layer0_list[0].get_output(input=images)

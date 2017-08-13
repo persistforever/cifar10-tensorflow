@@ -47,6 +47,7 @@ class ConvLayer:
         # calculate input_shape and output_shape
         self.output_shape = [self.input_shape[0], int(self.input_shape[1]/self.stride),
                              int(self.input_shape[2]/self.stride), self.n_filter]
+        
         # hidden states
         self.conv = tf.nn.conv2d(
             input=input, filter=self.weight, 
