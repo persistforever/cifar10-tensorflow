@@ -60,70 +60,70 @@ class ConvNet():
         conv_layer0_list.append(
             ConvLayer(
                 input_shape=(None, self.image_size, self.image_size, self.n_channel), 
-                n_size=3, n_filter=16, stride=1, activation='relu', 
+                n_size=3, n_filter=64, stride=1, activation='relu', 
                 batch_normal=True, weight_decay=1e-4, name='conv0'))
         
         conv_layer1_list = []
         for i in range(1, n_layers+1):
             conv_layer1_list.append(
                 ConvLayer(
-                    input_shape=(None, self.image_size, self.image_size, 16), 
-                    n_size=3, n_filter=16, stride=1, activation='relu', 
+                    input_shape=(None, self.image_size, self.image_size, 64), 
+                    n_size=3, n_filter=64, stride=1, activation='relu', 
                     batch_normal=True, weight_decay=1e-4, name='conv1_%d' % (2*i-1)))
             conv_layer1_list.append(
                 ConvLayer(
-                    input_shape=(None, self.image_size, self.image_size, 16), 
-                    n_size=3, n_filter=16, stride=1, activation='none', 
+                    input_shape=(None, self.image_size, self.image_size, 64), 
+                    n_size=3, n_filter=64, stride=1, activation='none', 
                     batch_normal=True, weight_decay=1e-4, name='conv1_%d' % (2*i)))
         
         conv_layer2_list = []
         conv_layer2_list.append(
             ConvLayer(
-                input_shape=(None, self.image_size, self.image_size, 16), 
-                n_size=3, n_filter=32, stride=2, activation='relu', 
+                input_shape=(None, self.image_size, self.image_size, 64), 
+                n_size=3, n_filter=128, stride=2, activation='relu', 
                 batch_normal=True, weight_decay=1e-4, name='conv2_1'))
         conv_layer2_list.append(
             ConvLayer(
-                input_shape=(None, int(self.image_size)/2, int(self.image_size)/2, 32), 
-                n_size=3, n_filter=32, stride=1, activation='none', 
+                input_shape=(None, int(self.image_size)/2, int(self.image_size)/2, 128), 
+                n_size=3, n_filter=128, stride=1, activation='none', 
                 batch_normal=True, weight_decay=1e-4, name='conv2_2'))
         for i in range(2, n_layers+1):
             conv_layer2_list.append(
                 ConvLayer(
-                    input_shape=(None, int(self.image_size/2), int(self.image_size/2), 32), 
-                    n_size=3, n_filter=32, stride=1, activation='relu', 
+                    input_shape=(None, int(self.image_size/2), int(self.image_size/2), 128), 
+                    n_size=3, n_filter=128, stride=1, activation='relu', 
                     batch_normal=True, weight_decay=1e-4, name='conv2_%d' % (2*i-1)))
             conv_layer2_list.append(
                 ConvLayer(
-                    input_shape=(None, int(self.image_size/2), int(self.image_size/2), 32), 
-                    n_size=3, n_filter=32, stride=1, activation='none', 
+                    input_shape=(None, int(self.image_size/2), int(self.image_size/2), 128), 
+                    n_size=3, n_filter=128, stride=1, activation='none', 
                     batch_normal=True, weight_decay=1e-4, name='conv2_%d' % (2*i)))
         
         conv_layer3_list = []
         conv_layer3_list.append(
             ConvLayer(
-                input_shape=(None, int(self.image_size/2), int(self.image_size/2), 32), 
-                n_size=3, n_filter=64, stride=2, activation='relu', 
+                input_shape=(None, int(self.image_size/2), int(self.image_size/2), 128), 
+                n_size=3, n_filter=256, stride=2, activation='relu', 
                 batch_normal=True, weight_decay=1e-4, name='conv3_1'))
         conv_layer3_list.append(
             ConvLayer(
-                input_shape=(None, int(self.image_size/4), int(self.image_size/4), 64), 
-                n_size=3, n_filter=64, stride=1, activation='relu', 
+                input_shape=(None, int(self.image_size/4), int(self.image_size/4), 256), 
+                n_size=3, n_filter=256, stride=1, activation='relu', 
                 batch_normal=True, weight_decay=1e-4, name='conv3_2'))
         for i in range(2, n_layers+1):
             conv_layer3_list.append(
                 ConvLayer(
-                    input_shape=(None, int(self.image_size/4), int(self.image_size/4), 64), 
-                    n_size=3, n_filter=64, stride=1, activation='relu', 
+                    input_shape=(None, int(self.image_size/4), int(self.image_size/4), 256), 
+                    n_size=3, n_filter=256, stride=1, activation='relu', 
                     batch_normal=True, weight_decay=1e-4, name='conv3_%d' % (2*i-1)))
             conv_layer3_list.append(
                 ConvLayer(
-                    input_shape=(None, int(self.image_size/4), int(self.image_size/4), 64), 
-                    n_size=3, n_filter=64, stride=1, activation='none', 
+                    input_shape=(None, int(self.image_size/4), int(self.image_size/4), 256), 
+                    n_size=3, n_filter=256, stride=1, activation='none', 
                     batch_normal=True, weight_decay=1e-4, name='conv3_%d' % (2*i)))
         
         dense_layer1 = DenseLayer(
-            input_shape=(None, 64),
+            input_shape=(None, 256),
             hidden_dim=self.n_classes,
             activation='none', dropout=False, keep_prob=None, 
             batch_normal=False, weight_decay=1e-4, name='dense1')

@@ -68,8 +68,8 @@ def plot_curve(loss_list1, loss_idxs1, valid_precision_list1, valid_precision_id
 	plt.ylabel('accuracy')
 	plt.axis([0, 500, 0.8, 0.95])
 
-	plt.show()
-	# plt.savefig('E:\\Github\cifar10-tensorflow\\exps\cifar10-v20\cifar10-v20.png', dpi=72, format='png')
+	# plt.show()
+	plt.savefig('E:\\Github\cifar10-tensorflow\\exps\cifar10-v20\cifar10-v20.png', dpi=72, format='png')
 
 
 loss_list1, valid_precision_list1 = load_log('E:\\Github\cifar10-tensorflow\\exps\cifar10-v20\cifar10-v20.txt')
