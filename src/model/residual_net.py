@@ -140,7 +140,7 @@ class ConvNet():
         hidden_conv2 = conv_layer2_list[1].get_output(input=hidden_conv1)
         hidden_pool = tf.nn.max_pool(
             hidden_conv, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')
-        hidden_pad = tf.pad(hidden_pool, [[0,0], [0,0], [0,0], [8,8]])
+        hidden_pad = tf.pad(hidden_pool, [[0,0], [0,0], [0,0], [32,32]])
         hidden_conv = tf.nn.relu(hidden_pad + hidden_conv2)
         for i in range(1, n_layers):
             hidden_conv1 = conv_layer2_list[2*i].get_output(input=hidden_conv)
@@ -151,7 +151,7 @@ class ConvNet():
         hidden_conv2 = conv_layer3_list[1].get_output(input=hidden_conv1)
         hidden_pool = tf.nn.max_pool(
             hidden_conv, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')
-        hidden_pad = tf.pad(hidden_pool, [[0,0], [0,0], [0,0], [16,16]])
+        hidden_pad = tf.pad(hidden_pool, [[0,0], [0,0], [0,0], [64,64]])
         hidden_conv = tf.nn.relu(hidden_pad + hidden_conv2)
         for i in range(1, n_layers):
             hidden_conv1 = conv_layer3_list[2*i].get_output(input=hidden_conv)
