@@ -75,4 +75,5 @@ target/
 # Data files #
 ######################
 /data/
-/backup/
+/backups/
+/logs/

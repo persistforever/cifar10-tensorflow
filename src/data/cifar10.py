@@ -2,7 +2,6 @@
 import pickle
 import numpy
 import random
-import matplotlib.pyplot as plt
 import platform
 import cv2
 
