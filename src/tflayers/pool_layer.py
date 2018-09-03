@@ -9,7 +9,7 @@ import tensorflow as tf
 class PoolLayer:
     
     def __init__(self, y_size, x_size, y_stride, x_stride, mode='max', 
-                 data_format='NHWC', resp_normal=False, name='pool',
+                 data_format='channels_last', resp_normal=False, name='pool',
                  input_shape=None, prev_layer=None):
         # params
         self.y_size = y_size

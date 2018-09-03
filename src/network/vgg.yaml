@@ -1,0 +1,29 @@
+net:
+    conv_first:
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv1", bn: True}
+    conv:
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv2", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv3", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv4", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv5", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv6", bn: True}
+        - {type: "pool", x_size: 2, y_size: 2, x_stride: 2, y_stride: 2, mode: "max", name: "pool1"}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "leaky_relu", name: "conv7", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "leaky_relu", name: "conv8", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "leaky_relu", name: "conv9", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "leaky_relu", name: "conv10", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "leaky_relu", name: "conv11", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "leaky_relu", name: "conv12", bn: True}
+        - {type: "pool", x_size: 2, y_size: 2, x_stride: 2, y_stride: 2, mode: "max", name: "pool2"}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "leaky_relu", name: "conv13", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "leaky_relu", name: "conv14", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "leaky_relu", name: "conv15", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "leaky_relu", name: "conv16", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "leaky_relu", name: "conv17", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "leaky_relu", name: "conv18", bn: True}
+        - {type: "pool", x_size: 2, y_size: 2, x_stride: 2, y_stride: 2, mode: "max", name: "pool3"}
+    dense_first:
+        - {type: "dense", hidden_dim: 2048, dropout: True, activation: "leaky_relu", name: "dense1", bn: True}
+    dense:
+        - {type: "dense", hidden_dim: 2048, dropout: True, activation: "leaky_relu", name: "dense2", bn: True}
+        - {type: "dense", hidden_dim: 10, dropout: False, activation: "none", name: "dense3", bn: False}

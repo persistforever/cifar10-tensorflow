@@ -4,6 +4,7 @@ from __future__ import print_function
 import sys
 import os
 import time
+import yaml
 import numpy
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -13,7 +14,7 @@ from src.tflayers.dense_layer import DenseLayer
 
 class ConvNet():
     
-    def __init__(self, n_channel=3, n_classes=10, image_size=24):
+    def __init__(self, network_path, n_channel=3, n_classes=10, image_size=24):
         # 输入变量
         self.images = tf.placeholder(
             dtype=tf.float32, shape=[None, image_size, image_size, n_channel], name='images')
@@ -24,58 +25,62 @@ class ConvNet():
         self.global_step = tf.Variable( 
             0, dtype=tf.int32, name='global_step')
         
+        network_option_path = os.path.join(network_path)
+        self.network_option = yaml.load(open(network_option_path, 'r'))
         # 网络结构
         print()
-        conv_layer1 = ConvLayer(
-            y_size=3, x_size=3, y_stride=1, x_stride=1, n_filter=64, activation='relu',
-            data_format='channels_last', batch_normal=True, weight_decay=1e-4,
-            input_shape=(image_size, image_size, n_channel), name='conv1')
-        pool_layer1 = PoolLayer(
-            y_size=2, x_size=2, y_stride=2, x_stride=2,
-            input_shape=(image_size, image_size, 64), 
-            data_format='channels_last', mode='max', resp_normal=False, name='pool1')
+        self.conv_lists, self.dense_lists = [], []
+        for layer_dict in self.network_option['net']['conv_first']:
+            layer = ConvLayer(
+                x_size=layer_dict['x_size'], y_size=layer_dict['y_size'], 
+                x_stride=layer_dict['x_stride'], y_stride=layer_dict['y_stride'], 
+                n_filter=layer_dict['n_filter'], activation=layer_dict['activation'], 
+                batch_normal=layer_dict['bn'], weight_decay=1e-4, 
+                data_format='channels_last', name=layer_dict['name'], 
+                input_shape=(image_size, image_size, n_channel))
+            self.conv_lists.append(layer)
         
-        conv_layer2 = ConvLayer(
-            y_size=3, x_size=3, y_stride=1, x_stride=1, n_filter=128, activation='relu',
-            data_format='channels_last', batch_normal=True, weight_decay=1e-4,
-            input_shape=(int(image_size/2), int(image_size/2), 64),
-            name='conv2')
-        pool_layer2 = PoolLayer(
-            y_size=2, x_size=2, y_stride=2, x_stride=2,
-            input_shape=(int(image_size/2), int(image_size/2), 128), 
-            data_format='channels_last', mode='max', resp_normal=False, name='pool2')
+        for layer_dict in self.network_option['net']['conv']:
+            if layer_dict['type'] == 'conv':
+                layer = ConvLayer(
+                    x_size=layer_dict['x_size'], y_size=layer_dict['y_size'], 
+                    x_stride=layer_dict['x_stride'], y_stride=layer_dict['y_stride'], 
+                    n_filter=layer_dict['n_filter'], activation=layer_dict['activation'], 
+                    batch_normal=layer_dict['bn'], weight_decay=1e-4, 
+                    data_format='channels_last', name=layer_dict['name'], prev_layer=layer)
+            elif layer_dict['type'] == 'pool':
+                layer = PoolLayer(
+                    x_size=layer_dict['x_size'], y_size=layer_dict['y_size'], 
+                    x_stride=layer_dict['x_stride'], y_stride=layer_dict['y_stride'], 
+                    mode=layer_dict['mode'], resp_normal=False, 
+                    data_format='channels_last', name=layer_dict['name'], prev_layer=layer)
+            self.conv_lists.append(layer)
         
-        conv_layer3 = ConvLayer(
-            y_size=3, x_size=3, y_stride=1, x_stride=1, n_filter=256, activation='relu',
-            data_format='channels_last', batch_normal=True, weight_decay=1e-4,
-            input_shape=(int(image_size/4), int(image_size/4), 128),
-            name='conv3')
-        pool_layer3 = PoolLayer(
-            y_size=2, x_size=2, y_stride=2, x_stride=2,
-            input_shape=(int(image_size/4), int(image_size/4), 256), 
-            data_format='channels_last', mode='max', resp_normal=False, name='pool3')
-        
-        dense_layer1 = DenseLayer(
-            input_shape=(int(image_size/8) * int(image_size/8) * 256,), hidden_dim=1024, 
-            activation='relu', batch_normal=True, dropout=True, keep_prob=self.keep_prob, weight_decay=1e-4, 
-            name='dense1')
-        
-        dense_layer2 = DenseLayer(
-            input_shape=(1024,), hidden_dim=n_classes,
-            activation='none', batch_normal=False, dropout=False, keep_prob=None, weight_decay=1e-4, 
-            name='dense2')
+        for layer_dict in self.network_option['net']['dense_first']:
+            layer = DenseLayer(
+                hidden_dim=layer_dict['hidden_dim'], activation=layer_dict['activation'],
+                dropout=layer_dict['dropout'], keep_prob=self.keep_prob,
+                batch_normal=layer_dict['bn'], weight_decay=1e-4, 
+                name=layer_dict['name'],
+                input_shape=(int(image_size/8) * int(image_size/8) * 256, ))
+            self.dense_lists.append(layer)
+        for layer_dict in self.network_option['net']['dense']:
+            layer = DenseLayer(
+                hidden_dim=layer_dict['hidden_dim'], activation=layer_dict['activation'],
+                dropout=layer_dict['dropout'], keep_prob=self.keep_prob,
+                batch_normal=layer_dict['bn'], weight_decay=1e-4, 
+                name=layer_dict['name'], prev_layer=layer)
+            self.dense_lists.append(layer)
         print()
         
         # 数据流
-        hidden_conv1 = conv_layer1.get_output(inputs=self.images)
-        hidden_pool1 = pool_layer1.get_output(inputs=hidden_conv1)
-        hidden_conv2 = conv_layer2.get_output(inputs=hidden_pool1)
-        hidden_pool2 = pool_layer2.get_output(inputs=hidden_conv2)
-        hidden_conv3 = conv_layer3.get_output(inputs=hidden_pool2)
-        hidden_pool3 = pool_layer3.get_output(inputs=hidden_conv3)
-        input_dense1 = tf.reshape(hidden_pool3, [-1, int(image_size/8) * int(image_size/8) * 256])
-        output_dense1 = dense_layer1.get_output(inputs=input_dense1)
-        logits = dense_layer2.get_output(inputs=output_dense1)
+        hidden_state = self.images
+        for layer in self.conv_lists:
+            hidden_state = layer.get_output(inputs=hidden_state)
+        hidden_state = tf.reshape(hidden_state, [-1, int(image_size/8) * int(image_size/8) * 256])
+        for layer in self.dense_lists:
+            hidden_state = layer.get_output(inputs=hidden_state)
+        logits = hidden_state
         
         # 目标函数
         self.objective = tf.reduce_mean(
@@ -97,6 +102,9 @@ class ConvNet():
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
         
     def train(self, dataloader, backup_path, n_epoch=5, batch_size=128):
+        if not os.path.exists(backup_path):
+            os.mkdir(backup_path)
+
         # 构建会话
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))

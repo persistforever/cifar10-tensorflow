@@ -1,0 +1,13 @@
+net:
+    conv_first:
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "relu", name: "conv1", bn: True}
+    conv:
+        - {type: "pool", x_size: 2, y_size: 2, x_stride: 2, y_stride: 2, mode: "max", name: "pool1"}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "relu", name: "conv2", bn: True}
+        - {type: "pool", x_size: 2, y_size: 2, x_stride: 2, y_stride: 2, mode: "max", name: "pool2"}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "relu", name: "conv3", bn: True}
+        - {type: "pool", x_size: 2, y_size: 2, x_stride: 2, y_stride: 2, mode: "max", name: "pool3"}
+    dense_first:
+        - {type: "dense", hidden_dim: 1024, dropout: True, activation: "relu", name: "dense1", bn: True}
+    dense:
+        - {type: "dense", hidden_dim: 10, dropout: False, activation: "none", name: "dense2", bn: False}

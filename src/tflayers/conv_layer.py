@@ -11,7 +11,7 @@ import random
 class ConvLayer:
     
     def __init__(self, y_size, x_size, y_stride, x_stride, n_filter, activation='relu',
-                 data_format='NHWC', batch_normal=False, weight_decay=None, name='conv',
+                 data_format='channels_last', batch_normal=False, weight_decay=None, name='conv',
                  input_shape=None, prev_layer=None):
         # params
         self.y_size = y_size

@@ -9,7 +9,8 @@ import tensorflow as tf
 class DenseLayer:
     
     def __init__(self, hidden_dim, activation='relu', name='dense',
-                 batch_normal=False, dropout=False, keep_prob=0.0, weight_decay=None, input_shape=None):
+                 batch_normal=False, dropout=False, keep_prob=0.0, 
+                 weight_decay=None, input_shape=None, prev_layer=None):
         # params
         self.input_shape = input_shape
         self.hidden_dim = hidden_dim
@@ -20,7 +21,10 @@ class DenseLayer:
         self.weight_decay = weight_decay
         self.name = name
         self.lytpe = 'dense'
-        if input_shape:
+        if prev_layer:
+            self.prev_layer = prev_layer
+            self.input_shape = prev_layer.output_shape
+        elif input_shape:
             self.input_shape = input_shape
         else:
             raise('ERROR: prev_layer or input_shape cannot be None!')

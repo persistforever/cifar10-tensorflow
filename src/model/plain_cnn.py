@@ -2,12 +2,13 @@
 # author: ronniecao
 import sys
 import os
+import yaml
 import numpy
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from src.layer.conv_layer import ConvLayer
-from src.layer.dense_layer import DenseLayer
-from src.layer.pool_layer import PoolLayer
+from src.tflayers.conv_layer import ConvLayer
+from src.tflayers.dense_layer import DenseLayer
+from src.tflayers.pool_layer import PoolLayer
 
 class ConvNet():
     
@@ -52,63 +53,61 @@ class ConvNet():
         self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
         
     def inference(self, images):
+        network_option_path = os.path.join('src/network/vgg.yaml')
+        self.network_option = yaml.load(open(network_option_path, 'r'))
+        
         # 网络结构
-        conv_layer1_list = []
-        conv_layer1_list.append(
-            ConvLayer(
-                input_shape=(None, self.image_size, self.image_size, self.n_channel), 
-                n_size=3, n_filter=16, stride=1, activation='relu', 
-                batch_normal=True, weight_decay=1e-4, name='conv1_1'))
-        for i in range(5):
-            conv_layer1_list.append(
-                ConvLayer(
-                    input_shape=(None, self.image_size, self.image_size, 16), 
-                    n_size=3, n_filter=16, stride=1, activation='relu', 
-                    batch_normal=True, weight_decay=1e-4, name='conv1_%d' % (i+2)))
+        self.layer_lists = []
+        for layer_dict in self.network_option['vgg']['conv_first']:
+            layer = ConvLayer(
+                x_size=layer_dict['x_size'], y_size=layer_dict['y_size'], 
+                x_stride=layer_dict['x_stride'], y_stride=layer_dict['y_stride'], 
+                n_filter=layer_dict['n_filter'], activation=layer_dict['activation'], 
+                batch_normal=layer_dict['bn'], weight_decay=0.0, 
+                name=layer_dict['name'], 
+                input_shape=(self.image_size, self.image_size, self.n_channel))
+            self.layer_lists.append(layer)
         
-        conv_layer2_list = []
-        conv_layer2_list.append(
-            ConvLayer(
-                input_shape=(None, self.image_size, self.image_size, 16), 
-                n_size=3, n_filter=32, stride=2, activation='relu', 
-                batch_normal=True, weight_decay=1e-4, name='conv2_1'))
-        for i in range(5):
-            conv_layer2_list.append(
-                ConvLayer(
-                    input_shape=(None, int(self.image_size/2), int(self.image_size/2), 32), 
-                    n_size=3, n_filter=32, stride=1, activation='relu', 
-                    batch_normal=True, weight_decay=1e-4, name='conv2_%d' % (i+2)))
+        for layer_dict in self.network_option['vgg']['conv']:
+            if layer_dict['type'] == 'conv':
+                layer = ConvLayer(
+                    x_size=layer_dict['x_size'], y_size=layer_dict['y_size'], 
+                    x_stride=layer_dict['x_stride'], y_stride=layer_dict['y_stride'], 
+                    n_filter=layer_dict['n_filter'], activation=layer_dict['activation'], 
+                    batch_normal=layer_dict['bn'], weight_decay=0.0, 
+                    name=layer_dict['name'], prev_layer=layer)
+            elif layer_dict['type'] == 'pool':
+                layer = PoolLayer(
+                    x_size=layer_dict['x_size'], y_size=layer_dict['y_size'], 
+                    x_stride=layer_dict['x_stride'], y_stride=layer_dict['y_stride'], 
+                    mode=layer_dict['mode'], resp_normal=False, 
+                    name=layer_dict['name'], prev_layer=layer)
+            self.layer_lists.append(layer)
         
-        conv_layer3_list = []
-        conv_layer3_list.append(
-            ConvLayer(
-                input_shape=(None, int(self.image_size/2), int(self.image_size/2), 32), 
-                n_size=3, n_filter=64, stride=2, activation='relu', 
-                batch_normal=True, weight_decay=1e-4, name='conv3_1'))
-        for i in range(5):
-            conv_layer3_list.append(
-                ConvLayer(
-                    input_shape=(None, int(self.image_size/4), int(self.image_size/4), 64), 
-                    n_size=3, n_filter=64, stride=1, activation='relu', 
-                    batch_normal=True, weight_decay=1e-4, name='conv3_%d' % (i+2)))
-        
-        dense_layer1 = DenseLayer(
-            input_shape=(None, 64),
-            hidden_dim=self.n_classes,
-            activation='none', dropout=False, keep_prob=None, 
-            batch_normal=True, weight_decay=1e-4, name='dense1')
+        for layer_dict in self.network_option['vgg']['dense_first']:
+            layer = DenseLayer(
+                hidden_dim=layer_dict['hidden_dim'], activation=layer_dict['activation'],
+                dropout=layer_dict['dropout'], keep_prob=self.keep_prob,
+                batch_normal=layer_dict['bn'], weight_decay=0.0, 
+                name=layer_dict['name'],
+                input_shape=(int(self.image_size/8) * int(self.image_size/8) * 256, ))
+            self.layer_lists.append(layer)
+        for layer_dict in self.network_option['vgg']['dense']:
+            layer = DenseLayer(
+                hidden_dim=layer_dict['hidden_dim'], activation=layer_dict['activation'],
+                dropout=layer_dict['dropout'], keep_prob=self.keep_prob,
+                batch_normal=layer_dict['bn'], weight_decay=0.0, 
+                name=layer_dict['name'], prev_layer=layer)
+            self.layer_lists.append(layer)
         
         # 数据流
-        hidden_conv = images
-        for i in range(6):
-            hidden_conv = conv_layer1_list[i].get_output(input=hidden_conv)
-        for i in range(6):
-            hidden_conv = conv_layer2_list[i].get_output(input=hidden_conv)
-        for i in range(6):
-            hidden_conv = conv_layer3_list[i].get_output(input=hidden_conv)
-        # global average pooling
-        input_dense1 = tf.reduce_mean(hidden_conv, reduction_indices=[1, 2])
-        logits = dense_layer1.get_output(input=input_dense1)
+        hidden_state = images
+        for layer in self.layer_lists[0:21]:
+            hidden_state = layer.get_output(inputs=hidden_state)
+        hidden_state = tf.reshape(hidden_state, (-1, int(self.image_size/8) * int(self.image_size/8) * 256))
+        for layer in self.layer_lists[21:]:
+            hidden_state = layer.get_output(inputs=hidden_state)
+        logits = hidden_state
         
         return logits
         

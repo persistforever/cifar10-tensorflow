@@ -4,13 +4,13 @@ import os
 from src.data.cifar10 import Corpus
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 cifar10 = Corpus()
 
 def basic_cnn():
     from src.model.basic_cnn import ConvNet
-    convnet = ConvNet(n_channel=3, n_classes=10, image_size=24)
+    convnet = ConvNet(n_channel=3, n_classes=10, image_size=24, network_path='src/network/basic.yaml')
     # convnet.debug()
     convnet.train(dataloader=cifar10, backup_path='backups/cifar10-v1/', batch_size=128, n_epoch=500)
     # convnet.test(dataloader=cifar10, backup_path='backup/cifar10-v2/', epoch=5000, batch_size=128)
@@ -18,10 +18,10 @@ def basic_cnn():
     # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
     
 def plain_cnn():
-    from src.model.plain_cnn import ConvNet
-    convnet = ConvNet(n_channel=3, n_classes=10, image_size=24)
+    from src.model.basic_cnn import ConvNet
+    convnet = ConvNet(n_channel=3, n_classes=10, image_size=24, network_path='src/network/vgg.yaml')
     # convnet.debug()
-    convnet.train(dataloader=cifar10, backup_path='backup/cifar10-v16/', batch_size=128, n_epoch=500)
+    convnet.train(dataloader=cifar10, backup_path='backups/cifar10-v2/', batch_size=128, n_epoch=500)
     # convnet.test(backup_path='backup/cifar10-v3/', epoch=0, batch_size=128)
     # convnet.observe_salience(batch_size=1, n_channel=3, num_test=10, epoch=2)
     # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
@@ -35,4 +35,4 @@ def residual_net():
     # convnet.observe_salience(batch_size=1, n_channel=3, num_test=10, epoch=2)
     # convnet.observe_hidden_distribution(batch_size=128, n_channel=3, num_test=1, epoch=980)
 
-basic_cnn()
+plain_cnn()
