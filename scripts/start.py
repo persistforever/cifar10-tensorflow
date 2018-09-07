@@ -13,34 +13,40 @@ os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
  
 class Starter:
     
-    def __init__(self, method, gpus=''):
+    def __init__(self):
         from src.dataloader.cifar10 import Dataloader
-        from src.model.resnet import Model
         from src.network.resnet import Network
+        from src.manager.resnet import Manager
             
         # 读取配置
-        config_path = os.path.join(config.project_root, 'src/config/params/resnet.yaml')
-        option = yaml.load(open(config_path, 'r'))
+        config_path = os.path.join('src/config/options/resnet.yaml')
+        self.option = yaml.load(open(config_path, 'r'))
         
         # 实例化data模块
-        dataloader = Corpus()
-
+        self.dataloader = Dataloader(
+            data_path=self.option['data_path'],
+            config_path=config_path)
+        
         # 实例化network模块
-        network = 
-        
+        self.network = Network(
+            config_path=config_path,
+            network_config_path=self.option['network_path'])
+       
         # 实例化model模块
-        model = ConvNet(
-            n_channel=option['n_channel'], 
-            n_classes=option['n_classes'], 
-            image_size=option['image_size'], 
-            network_path='src/config/network/resnet.yaml')
+        self.manager = Manager(
+            config_path=config_path,
+            backups_dir=os.path.join('backups', self.option['seq']),
+            logs_dir=os.path.join('logs', self.option['seq']))
+        self.manager.init_module(
+            dataloader=self.dataloader, 
+            network=self.network)
     
-    def main(method='train'):
-        # 设置GPU
-        os.environ['CUDA_VISIBLE_DEVICES'] = option['train_gpus']
+    def main(self, method='train'):
         
-        convnet.train(dataloader=cifar10, backup_path='backups/cifar10-v5/', batch_size=128, n_epoch=500)
-        # convnet.test(backup_path='backup/cifar10-v4/', epoch=0, batch_size=128)
+        if method == 'train':
+            # 设置GPU
+            os.environ['CUDA_VISIBLE_DEVICES'] = self.option['train_gpus']
+            self.manager.train()
 
 
 if __name__ == '__main__':
@@ -51,4 +57,5 @@ if __name__ == '__main__':
     arg = parser.parse_args()
     method = arg.method
     
-    resnet(method='train')
+    starter = Starter()
+    starter.main(method=method)

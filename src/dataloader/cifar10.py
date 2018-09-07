@@ -3,21 +3,30 @@
 # time: 2018/09/06
 # intro: dataloader of image classification on cifar-10 datasets
 from __future__ import print_function
+import os
+import platform
+import yaml
 import pickle
 import numpy
-import random
-import platform
 import cv2
 
 
 class Dataloader:
     
     def __init__(self, data_path, config_path):
-        self.load_cifar10('data/CIFAR10_data')
-        self._split_train_valid(valid_rate=0.9)
+        # 读取配置
+        option = yaml.load(open(config_path, 'r'))
+        
+        self.load_cifar10(data_path)
+        self._split_train_valid(valid_rate=option['valid_rate'])
         self.n_train = self.train_images.shape[0]
         self.n_valid = self.valid_images.shape[0]
         self.n_test = self.test_images.shape[0]
+        print('\n' + '='*20 + ' load data ' + '='*20)
+        print('# train data: %d' % (self.n_train))
+        print('# valid data: %d' % (self.n_valid))
+        print('# test data: %d' % (self.n_test))
+        print('='*20 + ' load data ' + '='*20 + '\n')
         
     def _split_train_valid(self, valid_rate=0.9):
         images, labels = self.train_images, self.train_labels 
