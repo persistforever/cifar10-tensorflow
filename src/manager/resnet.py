@@ -56,14 +56,14 @@ class Manager():
             # 优化器
             lr = tf.cond(
                 tf.less(self.global_step, 400), 
-                lambda: tf.constant(0.01),
+                lambda: tf.constant(0.0001),
                 lambda: tf.cond(
                     tf.less(self.global_step, 32000), 
-                    lambda: tf.constant(0.1),
+                    lambda: tf.constant(0.001),
                     lambda: tf.cond(
                         tf.less(self.global_step, 48000),
-                        lambda: tf.constant(0.01),
-                        lambda: tf.constant(0.001))))
+                        lambda: tf.constant(0.0001),
+                        lambda: tf.constant(0.00001))))
             if self.option['update_function'] == 'momentum':
                 self.optimizer = tf.train.MomentumOptimizer(learning_rate=lr, momentum=0.9)
             elif self.option['update_function'] == 'adam':
@@ -123,7 +123,6 @@ class Manager():
                 train_accuracy += avg_accuracy * batch_images.shape[0]
                 
                 if i % (100 * self.option['batch_size']) == 0:
-                    print(i)
                     print('epoch[%d], iter[%d], train loss: %.6f, train precision: %.6f\n' % (
                         epoch, iteration, avg_loss, avg_accuracy))
             

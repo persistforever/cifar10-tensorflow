@@ -127,20 +127,16 @@ class Network():
         for name, layer in self.layers.items():
             if layer.ltype == 'conv':
                 for weight in layer.conv.weights:
-                    print(weight)
                     self.l2_objective += tf.multiply(tf.nn.l2_loss(weight), self.option['weight_decay'])
                 for weight in layer.bn.weights:
                     if 'gamma' in weight.name:
-                        print(weight)
                         self.l2_objective += tf.multiply(tf.nn.l2_loss(weight), self.option['weight_decay'])
             if layer.ltype == 'dense':
                 for weight in layer.dense.weights:
-                    print(weight)
                     self.l2_objective += tf.multiply(tf.nn.l2_loss(weight), self.option['weight_decay'])
                 if 'bn' in layer.__dict__:
                     for weight in layer.bn.weights:
                         if 'gamma' in weight.name:
-                            print(weight)
                             self.l2_objective += tf.multiply(tf.nn.l2_loss(weight), self.option['weight_decay'])
 
         self.avg_loss = self.classify_objective + self.l2_objective
