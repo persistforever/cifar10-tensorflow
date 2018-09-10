@@ -8,19 +8,22 @@ import tensorflow as tf
 
 class DenseLayer:
     
-    def __init__(self, hidden_dim, activation='relu', name='dense',
-                 batch_normal=False, dropout=False, keep_prob=0.0, 
-                 weight_decay=None, input_shape=None, prev_layer=None):
+    def __init__(self, 
+        hidden_dim, 
+        activation='relu', batch_normal=False, dropout=False, keep_prob=0.0, 
+        input_shape=None, prev_layer=None,
+        name='dense'):
+
         # params
-        self.input_shape = input_shape
         self.hidden_dim = hidden_dim
         self.activation = activation
         self.batch_normal = batch_normal
         self.dropout = dropout
         self.keep_prob = keep_prob
-        self.weight_decay = weight_decay
         self.name = name
         self.ltype = 'dense'
+        self.params = {}
+        
         if prev_layer:
             self.prev_layer = prev_layer
             self.input_shape = prev_layer.output_shape
@@ -67,7 +70,7 @@ class DenseLayer:
         # 打印网络权重、输入、输出信息
         # calculate input_shape and output_shape
         self.output_shape = [self.hidden_dim]
-        print('%-10s\t%-25s\t%-20s\t%s' % (
+        print('%-10s\t%-25s\t%-20s\t%-20s' % (
             self.name, 
             '(%d)' % (self.hidden_dim),
             '(%d)' % (self.input_shape[0]),
@@ -105,6 +108,19 @@ class DenseLayer:
         with g.gradient_override_map({"Identity": "CustomClipGrad"}):
             self.output = tf.identity(self.output, name="Identity")
         
+        # 获取params
+        if self.batch_normal:
+            for tensor in self.dense.weights:
+                if 'kernel' in tensor.name:
+                    self.params['%s#%s' % (self.name, 'weight')] = tensor
+            for tensor in self.bn.weights:
+                if 'gamma' in tensor.name:
+                    self.params['%s#%s' % (self.name, 'gamma')] = tensor
+        else:
+            for tensor in self.dense.weights:
+                if 'kernel' in tensor.name:
+                    self.params['%s#%s' % (self.name, 'weight')] = tensor
+
         return self.output
     
     def leaky_relu(self, data):

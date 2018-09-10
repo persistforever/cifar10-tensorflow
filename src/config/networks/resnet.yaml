@@ -1,53 +1,24 @@
-n_layers: 4
+n_layers: 3
 n_blocks: 3
 
 net:
     conv_first:
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv1_1", bn: True}
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "conv1_1", bn: True}
     
     conv_layer1:
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv1_2", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "none", name: "conv1_3", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv1_4", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "none", name: "conv1_5", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "leaky_relu", name: "conv1_6", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "none", name: "conv1_7", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_1", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_2", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_3", bn: True}
         
     conv_layer2:
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 2, y_stride: 2, n_filter: 128, activation: "leaky_relu", name: "conv2_1", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "none", name: "conv2_2", bn: True}
-        
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "leaky_relu", name: "conv2_3", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "none", name: "conv2_4", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "leaky_relu", name: "conv2_5", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "none", name: "conv2_6", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "leaky_relu", name: "conv2_7", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 128, activation: "none", name: "conv2_8", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 2, y_stride: 2, n_filter: 32, activation: "relu", name: "res2_1", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 32, activation: "relu", name: "res2_2", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 32, activation: "relu", name: "res2_3", bn: True}
         
     conv_layer3:
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 2, y_stride: 2, n_filter: 256, activation: "leaky_relu", name: "conv3_1", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "none", name: "conv3_2", bn: True}
-        
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "leaky_relu", name: "conv3_3", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "none", name: "conv3_4", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "leaky_relu", name: "conv3_5", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "none", name: "conv3_6", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "leaky_relu", name: "conv3_7", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 256, activation: "none", name: "conv3_8", bn: True}
-        
-    conv_layer4:
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 2, y_stride: 2, n_filter: 512, activation: "leaky_relu", name: "conv4_1", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 512, activation: "none", name: "conv4_2", bn: True}
-        
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 512, activation: "leaky_relu", name: "conv4_3", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 512, activation: "none", name: "conv4_4", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 512, activation: "leaky_relu", name: "conv4_5", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 512, activation: "none", name: "conv4_6", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 512, activation: "leaky_relu", name: "conv4_7", bn: True}
-        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 512, activation: "none", name: "conv4_8", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 2, y_stride: 2, n_filter: 64, activation: "relu", name: "res3_1", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "relu", name: "res3_2", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "relu", name: "res3_3", bn: True}
     
     dense_first:
-        - {type: "dense", hidden_dim: 2048, dropout: True, activation: "leaky_relu", name: "dense1", bn: True}
-    
-    dense:
-        - {type: "dense", hidden_dim: 10, dropout: False, activation: "none", name: "dense2", bn: False}
+        - {type: "dense", hidden_dim: 10, dropout: False, activation: "none", name: "dense1", bn: False}

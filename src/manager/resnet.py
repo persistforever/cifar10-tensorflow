@@ -55,15 +55,12 @@ class Manager():
             
             # 优化器
             lr = tf.cond(
-                tf.less(self.global_step, 400), 
-                lambda: tf.constant(0.0001),
+                tf.less(self.global_step, 32000), 
+                lambda: tf.constant(0.005),
                 lambda: tf.cond(
-                    tf.less(self.global_step, 32000), 
-                    lambda: tf.constant(0.001),
-                    lambda: tf.cond(
-                        tf.less(self.global_step, 48000),
-                        lambda: tf.constant(0.0001),
-                        lambda: tf.constant(0.00001))))
+                    tf.less(self.global_step, 48000),
+                    lambda: tf.constant(0.0005),
+                    lambda: tf.constant(0.00005)))
             if self.option['update_function'] == 'momentum':
                 self.optimizer = tf.train.MomentumOptimizer(learning_rate=lr, momentum=0.9)
             elif self.option['update_function'] == 'adam':

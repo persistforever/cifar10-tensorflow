@@ -10,9 +10,12 @@ import random
 
 class ConvLayer:
     
-    def __init__(self, y_size, x_size, y_stride, x_stride, n_filter, activation='relu',
-                 data_format='channels_first', batch_normal=False, weight_decay=None, name='conv',
-                 input_shape=None, prev_layer=None):
+    def __init__(self, 
+        y_size, x_size, y_stride, x_stride, n_filter, 
+        activation='relu', batch_normal=False,
+        data_format='channels_first', input_shape=None, prev_layer=None,
+        name='conv'):
+
         # params
         self.y_size = y_size
         self.x_size = x_size
@@ -22,10 +25,10 @@ class ConvLayer:
         self.activation = activation
         self.data_format = data_format
         self.batch_normal = batch_normal
-        self.weight_decay = weight_decay
         self.name = name
         self.ltype = 'conv'
-        self.params = []
+        self.params = {}
+        
         if prev_layer:
             self.prev_layer = prev_layer
             self.input_shape = prev_layer.output_shape
@@ -34,24 +37,6 @@ class ConvLayer:
             self.input_shape = input_shape
         else:
             raise('ERROR: prev_layer or input_shape cannot be None!')
-        
-        # 计算感受野
-        self.feel_field = [1, 1]
-        self.feel_field[0] = min(self.input_shape[0], 1 + int((self.y_size+1)/2))
-        self.feel_field[1] = min(self.input_shape[1], 1 + int((self.x_size+1)/2))
-        prev_layer = self.prev_layer
-        while prev_layer:
-            if prev_layer.ltype == 'conv':
-                self.feel_field[0] = min(prev_layer.input_shape[0], 
-                    self.feel_field[0] + int((prev_layer.y_size+1)/2))
-                self.feel_field[1] = min(prev_layer.input_shape[1], 
-                    self.feel_field[1] + int((prev_layer.x_size+1)/2))
-            elif prev_layer.ltype == 'pool':
-                self.feel_field[0] = min(prev_layer.input_shape[0], 
-                    self.feel_field[0] * int(prev_layer.y_size))
-                self.feel_field[1] = min(prev_layer.input_shape[1], 
-                    self.feel_field[1] * int(prev_layer.x_size))
-            prev_layer = prev_layer.prev_layer
         
         self.leaky_scale = tf.constant(0.1, dtype=tf.float32)
     
@@ -96,23 +81,21 @@ class ConvLayer:
                     fused=True,
                     trainable=True,
                     name='%s_bn' % (self.name))
-        
+
         # 打印网络权重、输入、输出信息
         # calculate input_shape and output_shape
         self.output_shape = [
             int(self.input_shape[0]/self.y_stride),
             int(self.input_shape[1]/self.x_stride), 
             self.n_filter]
-        print('%-10s\t%-25s\t%-20s\t%-20s\t%s' % (
+        print('%-10s\t%-25s\t%-20s\t%-20s' % (
             self.name, 
             '((%d, %d) / (%d, %d) * %d)' % (
                 self.y_size, self.x_size, self.y_stride, self.x_stride, self.n_filter),
             '(%d, %d, %d)' % (
                 self.input_shape[0], self.input_shape[1], self.input_shape[2]),
             '(%d, %d, %d)' % (
-                self.output_shape[0], self.output_shape[1], self.output_shape[2]),
-            '(%d, %d)' % (
-                self.feel_field[0], self.feel_field[1])))
+                self.output_shape[0], self.output_shape[1], self.output_shape[2])))
         self.calculation = self.output_shape[0] * self.output_shape[1] * \
             self.output_shape[2] * self.input_shape[2] * self.y_size * self.x_size
         
@@ -147,6 +130,19 @@ class ConvLayer:
         
             if self.data_format == 'channels_first':
                 self.output = tf.transpose(self.output, [0,2,3,1])
+        
+        # 获取params
+        if self.batch_normal:
+            for tensor in self.conv.weights:
+                if 'kernel' in tensor.name:
+                    self.params['%s#%s' % (self.name, 'weight')] = tensor
+            for tensor in self.bn.weights:
+                if 'gamma' in tensor.name:
+                    self.params['%s#%s' % (self.name, 'gamma')] = tensor
+        else:
+            for tensor in self.conv.weights:
+                if 'kernel' in tensor.name:
+                    self.params['%s#%s' % (self.name, 'weight')] = tensor
         
         return self.output
     
