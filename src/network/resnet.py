@@ -31,7 +31,7 @@ class Network():
     def _network_structure(self):
         # 网络结构
         print('\n' + '='*20 + ' network structure ' + '='*20)
-        print('%-10s\t%-25s\t%-20s\t%-20s' % ('Name', 'Filter', 'Input', 'Output')) 
+        print('%-30s\t%-25s\t%-20s\t%-20s' % ('Name', 'Filter', 'Input', 'Output')) 
         
         self.layers = {}
         self.conv_lists, self.dense_lists = [], []
@@ -93,11 +93,9 @@ class Network():
         hidden_state = images
         for layer in self.conv_lists:
             hidden_state = layer.get_output(input=hidden_state)
-        hidden_state = tf.reshape(hidden_state, [
-            -1, int(self.option['image_size']/4) * int(self.option['image_size']/4), 64])
 
         # global average pooling
-        hidden_state = tf.reduce_max(hidden_state, axis=1)
+        hidden_state = tf.reduce_mean(hidden_state, axis=[1,2])
 
         # classification
         for layer in self.dense_lists:
@@ -123,7 +121,7 @@ class Network():
         self.avg_loss = self.classify_objective + self.l2_objective
         
         # 观察值
-        correct_prediction = tf.equal(labels, tf.cast(tf.argmax(logits, 1), dtype=tf.int32))
+        correct_prediction = tf.equal(labels, tf.cast(tf.argmax(tf.nn.softmax(logits), 1), dtype=tf.int32))
         self.avg_accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
 
         return self.avg_loss, self.avg_accuracy

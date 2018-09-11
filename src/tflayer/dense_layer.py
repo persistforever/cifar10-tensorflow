@@ -2,6 +2,7 @@
 # author: ronniecao
 # time: 20180828
 # intro: fully connected layer based on tensorflow.layers
+import math
 import numpy
 import tensorflow as tf
 
@@ -33,36 +34,35 @@ class DenseLayer:
             raise('ERROR: prev_layer or input_shape cannot be None!')
         
         with tf.name_scope('%s_def' % (self.name)) as scope:
-            weight_init_value = numpy.random.normal(size=[
-                self.input_shape[0], self.hidden_dim], 
-                loc=0.0, scale=numpy.sqrt(2.0 / self.input_shape[0]))
-            bias_init_value = numpy.zeros([self.hidden_dim], dtype='float32')
+            weight_initializer = tf.variance_scaling_initializer(
+                scale=2.0, mode='fan_in', distribution='normal', dtype=tf.float32)
+            bias_initializer = tf.zeros_initializer(dtype=tf.float32)
             
             self.dense = tf.layers.Dense(
                 units=self.hidden_dim,
                 activation=None,
                 use_bias=not self.batch_normal,
-                kernel_initializer=tf.constant_initializer(weight_init_value),
-                bias_initializer=tf.constant_initializer(bias_init_value),
+                kernel_initializer=weight_initializer,
+                bias_initializer=bias_initializer,
                 trainable=True,
                 name='%s_dense' % (self.name))
             
             if self.batch_normal:
-                beta_init_value = numpy.zeros([self.hidden_dim], dtype='float32')
-                gamma_init_value = numpy.ones([self.hidden_dim], dtype='float32')
-                moving_mean_init_value = numpy.zeros([self.hidden_dim], dtype='float32')
-                moving_variance_init_value = numpy.ones([self.hidden_dim], dtype='float32')
+                beta_initializer = tf.zeros_initializer(dtype=tf.float32)
+                gamma_initializer = tf.ones_initializer(dtype=tf.float32)
+                moving_mean_initializer = tf.zeros_initializer(dtype=tf.float32)
+                moving_variance_initializer = tf.ones_initializer(dtype=tf.float32)
                 
                 self.bn = tf.layers.BatchNormalization(
                     axis=-1,
                     momentum=0.9,
-                    epsilon=1e-5,
+                    epsilon=1e-3,
                     center=True,
                     scale=True,
-                    beta_initializer=tf.constant_initializer(beta_init_value),
-                    gamma_initializer=tf.constant_initializer(gamma_init_value),
-                    moving_mean_initializer=tf.constant_initializer(moving_mean_init_value),
-                    moving_variance_initializer=tf.constant_initializer(moving_variance_init_value),
+                    beta_initializer=beta_initializer,
+                    gamma_initializer=gamma_initializer,
+                    moving_mean_initializer=moving_mean_initializer,
+                    moving_variance_initializer=moving_variance_initializer,
                     fused=True,
                     trainable=True,
                     name='%s_bn' % (self.name))
@@ -70,21 +70,36 @@ class DenseLayer:
         # 打印网络权重、输入、输出信息
         # calculate input_shape and output_shape
         self.output_shape = [self.hidden_dim]
-        print('%-10s\t%-25s\t%-20s\t%-20s' % (
+        print('%-30s\t%-25s\t%-20s\t%-20s' % (
             self.name, 
             '(%d)' % (self.hidden_dim),
             '(%d)' % (self.input_shape[0]),
             '(%d)' % (self.output_shape[0])))
+        if self.batch_normal:
+            print('%-30s\t%-25s\t%-20s\t%-20s' % (
+                self.name + '(bn)', '()', 
+                '(%d, %d, %d)' % (
+                    self.output_shape[0], self.output_shape[1], self.output_shape[2]),
+                '(%d, %d, %d)' % (
+                    self.output_shape[0], self.output_shape[1], self.output_shape[2])))
+        if self.activation != 'none':
+            print('%-30s\t%-25s\t%-20s\t%-20s' % (
+                self.name + '(%s)' % (self.activation), '()', 
+                '(%d, %d, %d)' % (
+                    self.output_shape[0], self.output_shape[1], self.output_shape[2]),
+                '(%d, %d, %d)' % (
+                    self.output_shape[0], self.output_shape[1], self.output_shape[2])))
         self.calculation = self.input_shape[0] * self.output_shape[0]
         
     def get_output(self, input, is_training=tf.constant(True)):
+                
         # hidden states
         self.hidden = self.dense(input)
-            
+        
         # batch normalization 技术
         if self.batch_normal:
             self.hidden = self.bn(self.hidden, training=tf.constant(True))
-                
+            
         # dropout 技术
         if self.dropout:
             self.hidden = tf.nn.dropout(self.hidden, keep_prob=self.keep_prob)
@@ -103,11 +118,6 @@ class DenseLayer:
         elif self.activation == 'none':
             self.output = self.hidden
     
-        # gradient constraint
-        g = tf.get_default_graph()
-        with g.gradient_override_map({"Identity": "CustomClipGrad"}):
-            self.output = tf.identity(self.output, name="Identity")
-        
         # 获取params
         if self.batch_normal:
             for tensor in self.dense.weights:

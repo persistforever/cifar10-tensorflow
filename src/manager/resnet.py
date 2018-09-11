@@ -56,11 +56,11 @@ class Manager():
             # 优化器
             lr = tf.cond(
                 tf.less(self.global_step, 32000), 
-                lambda: tf.constant(0.005),
+                lambda: tf.constant(0.1),
                 lambda: tf.cond(
                     tf.less(self.global_step, 48000),
-                    lambda: tf.constant(0.0005),
-                    lambda: tf.constant(0.00005)))
+                    lambda: tf.constant(0.01),
+                    lambda: tf.constant(0.001)))
             if self.option['update_function'] == 'momentum':
                 self.optimizer = tf.train.MomentumOptimizer(learning_rate=lr, momentum=0.9)
             elif self.option['update_function'] == 'adam':
@@ -167,8 +167,9 @@ class Manager():
         self.sess.close()
                 
     def test(self, dataloader, backup_path, epoch, batch_size=128):
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
-        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        config = tf.ConfigProto(gpu_options=gpu_options, allow_soft_placement=True)
+        self.sess = tf.Session(config=config)
         # 读取模型
         self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
         model_path = os.path.join(backup_path, 'model_%d.ckpt' % (epoch))

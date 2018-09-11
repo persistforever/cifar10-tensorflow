@@ -9,6 +9,7 @@ import random
 from src.tflayer.conv_layer import ConvLayer
 from src.tflayer.pool_layer import PoolLayer
 from src.tflayer.dense_layer import DenseLayer
+from src.tflayer.batch_normal_layer import BatchNormLayer
 
 
 class ResidualBlock:
@@ -63,12 +64,18 @@ class ResidualBlock:
                 y_stride=1, 
                 n_filter=self.n_filter, 
                 activation='none', 
-                batch_normal=self.batch_normal, 
+                batch_normal=False, 
                 data_format=self.data_format, 
                 prev_layer=self.first_layer,
                 name='%s_%s' % (self.name, 'conv2'))
+            
+            self.third_layer = BatchNormLayer(
+                activation=self.activation, 
+                data_format=self.data_format, 
+                prev_layer=self.second_layer,
+                name='%s_%s' % (self.name, 'bn'))
 
-        self.output_shape = self.second_layer.output_shape
+        self.output_shape = self.third_layer.output_shape
         
     def get_output(self, input):
         
@@ -79,9 +86,9 @@ class ResidualBlock:
             
             # 调整input的y和x尺寸
             if self.x_stride != 1 or self.y_stride != 1:
-                hidden_pool = tf.nn.max_pool(
-                    input, ksize=[1,self.y_size,self.x_size,1], 
-                    strides=[1,self.y_stride,self.x_stride,1], padding='SAME')
+                hidden_pool = tf.nn.avg_pool(
+                    input, ksize=[1,self.y_stride,self.x_stride,1], 
+                    strides=[1,self.y_stride,self.x_stride,1], padding='VALID')
             else:
                 hidden_pool = input
 
@@ -93,13 +100,17 @@ class ResidualBlock:
             else:
                 hidden_pad = hidden_pool
             
-            hidden_conv = tf.nn.relu(hidden_pad + hidden_conv2)
-            self.output = hidden_conv
+            hidden_conv = hidden_pad + hidden_conv2
+            hidden_output = self.third_layer.get_output(input=hidden_conv)
+
+            self.output = hidden_output
 
         # 获取params
         for name, tensor in self.first_layer.params.items():
             self.params[name] = tensor
         for name, tensor in self.second_layer.params.items():
+            self.params[name] = tensor
+        for name, tensor in self.third_layer.params.items():
             self.params[name] = tensor
 
         return self.output

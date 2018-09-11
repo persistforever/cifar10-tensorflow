@@ -41,7 +41,7 @@ class PoolLayer:
             int(self.input_shape[0]/self.y_stride),
             int(self.input_shape[1]/self.x_stride), 
             self.input_shape[2]]
-        print('%-10s\t%-25s\t%-20s\t%-20s' % (
+        print('%-30s\t%-25s\t%-20s\t%-20s' % (
             self.name, 
             '((%d, %d) / (%d, %d))' % (
                 self.y_size, self.x_size, self.y_stride, self.x_stride),

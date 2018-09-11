@@ -5,11 +5,11 @@ weight_decay: 0.0001
 data_format: "channels_last"
 batch_size: 128
 valid_rate: 0.9
-update_function: "adam"
+update_function: "momentum"
 
-network_path: "src/config/networks/resnet.yaml"
+network_path: "src/config/networks/resnet56.yaml"
 data_path: "data/CIFAR10_data"
 seq: "cifar10-v5"
 
 train_gpus: "0"
-n_epoch: 500
+n_epoch: 200

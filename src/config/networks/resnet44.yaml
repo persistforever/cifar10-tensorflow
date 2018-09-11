@@ -1,0 +1,36 @@
+n_layers: 3
+n_blocks: 3
+
+net:
+    conv_first:
+        - {type: "conv", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "conv1_1", bn: True}
+    
+    conv_layer1:
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_1", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_2", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_3", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_4", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_5", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_6", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 16, activation: "relu", name: "res1_7", bn: True}
+        
+    conv_layer2:
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 2, y_stride: 2, n_filter: 32, activation: "relu", name: "res2_1", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 32, activation: "relu", name: "res2_2", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 32, activation: "relu", name: "res2_3", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 32, activation: "relu", name: "res2_4", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 32, activation: "relu", name: "res2_5", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 32, activation: "relu", name: "res2_6", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 32, activation: "relu", name: "res2_7", bn: True}
+        
+    conv_layer3:
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 2, y_stride: 2, n_filter: 64, activation: "relu", name: "res3_1", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "relu", name: "res3_2", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "relu", name: "res3_3", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "relu", name: "res3_4", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "relu", name: "res3_5", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "relu", name: "res3_6", bn: True}
+        - {type: "residual", x_size: 3, y_size: 3, x_stride: 1, y_stride: 1, n_filter: 64, activation: "relu", name: "res3_7", bn: True}
+    
+    dense_first:
+        - {type: "dense", hidden_dim: 10, dropout: False, activation: "none", name: "dense1", bn: False}

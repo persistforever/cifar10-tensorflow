@@ -134,7 +134,10 @@ class Dataloader:
         # 图像白化
         for i in range(images.shape[0]):
             old_image = images[i,:,:,:]
-            new_image = (old_image - numpy.mean(old_image)) / numpy.std(old_image)
+            mean = numpy.mean(old_image)
+            std = numpy.max([numpy.std(old_image), 
+                1.0/numpy.sqrt(images.shape[1]*images.shape[2]*images.shape[3])])
+            new_image = (old_image - mean) / std
             images[i,:,:,:] = new_image
         
         return images
